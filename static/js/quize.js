@@ -1,10 +1,14 @@
+const API = (window.location.port === '5501' || window.location.port === '5500')
+  ? 'http://127.0.0.1:5000'
+  : '';
+
 let questions = [];
 let timeLeft = 30;
 
 // تحميل الأسئلة
 async function loadQuiz() {
 
-    const response = await fetch("/questions");
+    const response = await fetch(`${API}/questions`);
     const data = await response.json();
 
     questions = data.questions;
@@ -80,7 +84,7 @@ async function submitQuiz() {
         }
     });
 
-    const response = await fetch("/submit", {
+    const response = await fetch(`${API}/submit`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

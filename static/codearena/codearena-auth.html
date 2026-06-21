@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeArena — Auth</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','sans-serif'] },
+      colors: {
+        brand: {
+          50:'#f0efff', 100:'#e0deff', 200:'#c2bcff',
+          300:'#a39aff', 400:'#7c6ff7', 500:'#5B4FE9',
+          600:'#4a3fd4', 700:'#3730b0', 800:'#26238c'
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family:'Inter',sans-serif; }
+  body { background:#eeeef8; transition: background-color .2s, color .2s; }
+  html.dark body { background:#0f0f1a; }
+  html.dark .auth-card { background:#1a1a2e !important; border:1px solid #2a2a40; }
+  html.dark .auth-input { background:#12121f !important; border-color:#2a2a40 !important; color:#e5e7eb !important; }
+  html.dark .auth-input::placeholder { color:#6b7280; }
+  html.dark .text-gray-900 { color:#f3f4f6 !important; }
+  html.dark .text-gray-800 { color:#e5e7eb !important; }
+  html.dark .text-gray-700 { color:#d1d5db !important; }
+  html.dark .text-gray-600 { color:#9ca3af !important; }
+  html.dark .text-gray-500 { color:#9ca3af !important; }
+  html.dark .text-gray-400 { color:#6b7280 !important; }
+  html.dark .border-gray-200 { border-color:#2a2a40 !important; }
+  html.dark .bg-gray-50 { background:#12121f !important; }
+  html.dark .hover\:bg-gray-50:hover { background:#1f1f35 !important; }
+  html.dark #toast { background:#1a1a2e !important; border-color:#2a2a40 !important; color:#e5e7eb; }
+  html.dark .or-line::before, html.dark .or-line::after { background:#2a2a40; }
+  html.dark .custom-check { border-color:#4b5563; }
+
+  /* Animated underline for logo */
+  .logo-text {
+    background: linear-gradient(135deg,#5B4FE9,#a39aff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Input focus ring */
+  .auth-input:focus {
+    outline: none;
+    border-color: #5B4FE9;
+    box-shadow: 0 0 0 3px rgba(91,79,233,0.15);
+  }
+
+  /* Page transitions */
+  .auth-screen { display:none; animation: fadeSlide .3s ease forwards; }
+  .auth-screen.active { display:block; }
+  @keyframes fadeSlide {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0);     }
+  }
+
+  /* Toast */
+  #toast {
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+    transform: translateY(-80px);
+    opacity: 0;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Custom checkbox */
+  .custom-check {
+    width:18px; height:18px; border:2px solid #d1d5db;
+    border-radius:4px; flex-shrink:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+  }
+  .custom-check.checked { background:#5B4FE9; border-color:#5B4FE9; }
+
+  /* Password strength */
+  .strength-bar { height:3px; border-radius:99px; transition:width .3s ease, background .3s ease; }
+
+  /* Divider line */
+  .or-line::before, .or-line::after {
+    content:''; flex:1; height:1px; background:#e5e7eb;
+  }
+  .or-line { display:flex; align-items:center; gap:12px; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between py-8 px-4">
+
+<!-- THEME TOGGLE -->
+<button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode"
+  class="fixed top-4 right-4 z-50 w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+</button>
+
+<!-- TOAST -->
+<div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium bg-white border border-gray-100 whitespace-nowrap">
+  <span id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- LOGO -->
+<div class="text-center mb-2">
+  <h1 class="logo-text text-3xl font-extrabold tracking-tight">CodeArena</h1>
+</div>
+
+<!-- AUTH CARD -->
+<div class="w-full max-w-sm">
+
+  <!-- ══════════ LOGIN ══════════ -->
+  <div id="screen-login" class="auth-screen active">
+    <div class="auth-card bg-white rounded-3xl shadow-sm p-7">
+      <div class="text-center mb-7">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>
+        <p class="text-gray-500 text-sm">Please enter your details to sign in.</p>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-4">
+        <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Email Address</label>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input id="login-email" type="email" placeholder="ahmed@taskflow.com" value="ahmed@taskflow.com"
+            class="auth-input w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+        </div>
+        <p id="login-email-err" class="text-[11px] text-red-500 mt-1 hidden"></p>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-2">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Password</label>
+          <button onclick="showScreen('forgot')" class="text-[12px] font-semibold text-brand-500 hover:text-brand-700 transition-colors">Forgot Password?</button>
+        </div>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input id="login-pass" type="password" placeholder="••••••••" value="password123"
+            class="auth-input w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+          <button onclick="togglePass('login-pass','login-eye')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+            <svg id="login-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p id="login-pass-err" class="text-[11px] text-red-500 mt-1 hidden"></p>
+      </div>
+
+      <!-- Remember me -->
+      <div class="flex items-center gap-2.5 mb-6 mt-3">
+        <div id="login-remember" class="custom-check" onclick="toggleCheck('login-remember')"></div>
+        <span class="text-sm text-gray-600">Remember for 30 days</span>
+      </div>
+
+      <!-- Submit -->
+      <button onclick="handleLogin()" class="w-full flex items-center justify-center gap-2 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm">
+        Sign In
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+
+      <!-- Divider -->
+      <div class="or-line my-5 text-xs text-gray-400 font-medium">Or continue with</div>
+
+      <!-- Google -->
+      <button onclick="handleGoogle()" class="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.85L38.4 6.1C34.6 2.3 29.6 0 24 0 14.64 0 6.68 5.48 2.92 13.44l7.1 5.51C11.86 13.1 17.5 9.5 24 9.5z"/><path fill="#4285F4" d="M46.52 24.5c0-1.64-.15-3.22-.42-4.74H24v8.98h12.7c-.55 2.93-2.2 5.41-4.68 7.09l7.18 5.58C43.2 37.6 46.52 31.5 46.52 24.5z"/><path fill="#FBBC05" d="M10.02 28.95A14.5 14.5 0 0 1 9.5 24c0-1.72.3-3.38.52-4.95l-7.1-5.51A23.94 23.94 0 0 0 0 24c0 3.86.92 7.5 2.54 10.72l7.48-5.77z"/><path fill="#34A853" d="M24 48c5.6 0 10.3-1.85 13.73-5.03l-7.18-5.58c-1.97 1.32-4.5 2.11-6.55 2.11-6.5 0-12.14-3.6-14.98-8.95l-7.48 5.77C6.68 42.52 14.64 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+
+      <!-- Footer link -->
+      <p class="text-center text-sm text-gray-500 mt-5">
+        Don't have an account? <button onclick="showScreen('register')" class="font-semibold text-brand-500 hover:text-brand-700 transition-colors">Create account</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════ REGISTER ══════════ -->
+  <div id="screen-register" class="auth-screen">
+    <div class="auth-card bg-white rounded-3xl shadow-sm p-7">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Create an account</h2>
+        <p class="text-gray-500 text-sm">Get started with your free 14-day trial.</p>
+      </div>
+
+      <!-- Full Name -->
+      <div class="mb-4">
+        <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Full Name</label>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input id="reg-name" type="text" placeholder="Ahmed"
+            class="auth-input w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+        </div>
+        <p id="reg-name-err" class="text-[11px] text-red-500 mt-1 hidden"></p>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-4">
+        <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Email Address</label>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input id="reg-email" type="email" placeholder="ahmed@taskflow.com"
+            class="auth-input w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+        </div>
+        <p id="reg-email-err" class="text-[11px] text-red-500 mt-1 hidden"></p>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-1">
+        <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Password</label>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input id="reg-pass" type="password" placeholder="••••••••" oninput="checkStrength(this.value)"
+            class="auth-input w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+          <button onclick="togglePass('reg-pass','reg-eye')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+            <svg id="reg-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <!-- Strength bars -->
+        <div class="flex gap-1 mt-2" id="strength-bars">
+          <div class="strength-bar flex-1 bg-gray-200" id="sb1"></div>
+          <div class="strength-bar flex-1 bg-gray-200" id="sb2"></div>
+          <div class="strength-bar flex-1 bg-gray-200" id="sb3"></div>
+          <div class="strength-bar flex-1 bg-gray-200" id="sb4"></div>
+        </div>
+        <p id="reg-pass-err" class="text-[11px] text-gray-400 mt-1">Must be at least 8 characters with one number.</p>
+      </div>
+
+      <!-- Terms -->
+      <div class="flex items-start gap-2.5 mb-5 mt-4">
+        <div id="reg-terms" class="custom-check mt-0.5" onclick="toggleCheck('reg-terms')"></div>
+        <span class="text-sm text-gray-600 leading-snug">I agree to the <button onclick="void(0)" class="font-semibold text-brand-500 hover:text-brand-700">Terms of Service</button> and <button onclick="void(0)" class="font-semibold text-brand-500 hover:text-brand-700">Privacy Policy</button></span>
+      </div>
+      <p id="reg-terms-err" class="text-[11px] text-red-500 -mt-3 mb-3 hidden"></p>
+
+      <!-- Submit -->
+      <button onclick="handleRegister()" class="w-full flex items-center justify-center gap-2 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm">
+        Create Account
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+
+      <!-- Divider -->
+      <div class="or-line my-5 text-xs text-gray-400 font-medium">OR CONTINUE WITH</div>
+
+      <!-- Social -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="handleGoogle()" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.85L38.4 6.1C34.6 2.3 29.6 0 24 0 14.64 0 6.68 5.48 2.92 13.44l7.1 5.51C11.86 13.1 17.5 9.5 24 9.5z"/><path fill="#4285F4" d="M46.52 24.5c0-1.64-.15-3.22-.42-4.74H24v8.98h12.7c-.55 2.93-2.2 5.41-4.68 7.09l7.18 5.58C43.2 37.6 46.52 31.5 46.52 24.5z"/><path fill="#FBBC05" d="M10.02 28.95A14.5 14.5 0 0 1 9.5 24c0-1.72.3-3.38.52-4.95l-7.1-5.51A23.94 23.94 0 0 0 0 24c0 3.86.92 7.5 2.54 10.72l7.48-5.77z"/><path fill="#34A853" d="M24 48c5.6 0 10.3-1.85 13.73-5.03l-7.18-5.58c-1.97 1.32-4.5 2.11-6.55 2.11-6.5 0-12.14-3.6-14.98-8.95l-7.48 5.77C6.68 42.52 14.64 48 24 48z"/></svg>
+          Google
+        </button>
+        <button onclick="handleGithub()" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </button>
+      </div>
+
+      <p class="text-center text-sm text-gray-500 mt-5">
+        Already have an account? <button onclick="showScreen('login')" class="font-semibold text-brand-500 hover:text-brand-700 transition-colors">Sign In</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════ FORGOT PASSWORD ══════════ -->
+  <div id="screen-forgot" class="auth-screen">
+    <div class="auth-card bg-white rounded-3xl shadow-sm p-7">
+      <div class="text-center mb-7">
+        <div class="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Reset Password</h2>
+        <p class="text-gray-500 text-sm leading-relaxed">Enter your email address below and we'll send you a link to reset your password.</p>
+      </div>
+
+      <!-- Sent success state (hidden by default) -->
+      <div id="forgot-success" class="hidden text-center py-4">
+        <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Check your email</h3>
+        <p class="text-sm text-gray-500 mb-5">We've sent a reset link to <strong id="sent-email" class="text-gray-800"></strong></p>
+        <button onclick="showScreen('login')" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition-colors text-sm">Back to Sign In</button>
+      </div>
+
+      <!-- Form -->
+      <div id="forgot-form">
+        <div class="mb-5">
+          <label class="block text-sm text-gray-600 mb-1.5">Email Address</label>
+          <div class="relative">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input id="forgot-email" type="email" placeholder="ahmed@taskflow.com" value="ahmed@taskflow.com"
+              class="auth-input w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 transition-all placeholder:text-gray-400">
+          </div>
+          <p id="forgot-email-err" class="text-[11px] text-red-500 mt-1 hidden"></p>
+        </div>
+
+        <button onclick="handleForgot()" class="w-full flex items-center justify-center gap-2 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm mb-4">
+          Send Reset Link
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+
+        <button onclick="showScreen('login')" class="w-full flex items-center justify-center gap-2 text-sm font-medium text-brand-500 hover:text-brand-700 transition-colors py-1">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back to Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end card -->
+
+<!-- FOOTER -->
+<footer class="text-center mt-4">
+  <p class="text-sm text-gray-500 mb-2">
+    Don't have an account? <button onclick="showScreen('register')" class="font-semibold text-brand-500 hover:text-brand-700 transition-colors" id="footer-link">Create account</button>
+  </p>
+  <p class="text-xs text-gray-400 mb-2">© 2024 CodeArena. Mastering Dev together.</p>
+  <div class="flex items-center justify-center gap-4">
+    <button class="text-xs text-gray-400 hover:text-gray-600 transition-colors">Privacy Policy</button>
+    <button class="text-xs text-gray-400 hover:text-gray-600 transition-colors">Terms of Service</button>
+    <button class="text-xs text-gray-400 hover:text-gray-600 transition-colors">Contact Support</button>
+  </div>
+</footer>
+
+<script>
+/* ══════════════════════════════
+   MOCK USER STORE
+══════════════════════════════ */
+let users = [
+  { name:'Ahmed', email:'ahmed@taskflow.com', password:'password123' }
+];
+let currentUser = null;
+
+/* ══════════════════════════════
+   SCREEN NAVIGATION
+══════════════════════════════ */
+function showScreen(name) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  clearErrors();
+
+  // Update footer link
+  const fl = document.getElementById('footer-link');
+  if (name === 'login') {
+    fl.textContent = 'Create account';
+    fl.onclick = () => showScreen('register');
+    fl.closest('p').querySelector('span, p, text') // stays
+    fl.previousSibling.textContent = "Don't have an account? ";
+  } else if (name === 'register') {
+    fl.textContent = 'Sign In';
+    fl.onclick = () => showScreen('login');
+    fl.previousSibling.textContent = 'Already have an account? ';
+  } else {
+    fl.textContent = 'Create account';
+    fl.onclick = () => showScreen('register');
+    fl.previousSibling.textContent = "Don't have an account? ";
+  }
+
+  // Reset forgot screen
+  if (name === 'forgot') {
+    document.getElementById('forgot-success').classList.add('hidden');
+    document.getElementById('forgot-form').classList.remove('hidden');
+  }
+}
+
+/* ══════════════════════════════
+   VALIDATION HELPERS
+══════════════════════════════ */
+function clearErrors() {
+  document.querySelectorAll('[id$="-err"]').forEach(el => {
+    el.classList.add('hidden');
+    el.textContent = '';
+  });
+  document.querySelectorAll('.auth-input').forEach(el => {
+    el.classList.remove('border-red-400');
+  });
+}
+
+function showError(fieldId, msg) {
+  const inp = document.getElementById(fieldId);
+  const err = document.getElementById(fieldId + '-err');
+  if (inp) inp.classList.add('border-red-400');
+  if (err) { err.textContent = msg; err.classList.remove('hidden'); }
+}
+
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+/* ══════════════════════════════
+   LOGIN
+══════════════════════════════ */
+function handleLogin() {
+  clearErrors();
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  let valid = true;
+
+  if (!email) { showError('login-email', 'Email is required.'); valid=false; }
+  else if (!isValidEmail(email)) { showError('login-email', 'Enter a valid email address.'); valid=false; }
+  if (!pass) { showError('login-pass', 'Password is required.'); valid=false; }
+
+  if (!valid) return;
+
+  const user = users.find(u => u.email === email && u.password === pass);
+  if (!user) {
+    showError('login-pass', 'Incorrect email or password.');
+    return;
+  }
+
+  currentUser = user;
+  showToast('success', `Welcome back, ${user.name}! Redirecting…`);
+  setTimeout(() => redirectToApp(user), 1800);
+}
+
+/* ══════════════════════════════
+   REGISTER
+══════════════════════════════ */
+function handleRegister() {
+  clearErrors();
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const terms = document.getElementById('reg-terms').classList.contains('checked');
+  let valid = true;
+
+  if (!name) { showError('reg-name', 'Full name is required.'); valid=false; }
+  if (!email) { showError('reg-email', 'Email is required.'); valid=false; }
+  else if (!isValidEmail(email)) { showError('reg-email', 'Enter a valid email address.'); valid=false; }
+  if (!pass) { showError('reg-pass', 'Password is required.'); valid=false; }
+  else if (pass.length < 8) { showError('reg-pass', 'Must be at least 8 characters.'); valid=false; }
+  else if (!/\d/.test(pass)) { showError('reg-pass', 'Must contain at least one number.'); valid=false; }
+  if (!terms) {
+    const el = document.getElementById('reg-terms-err');
+    el.textContent = 'You must agree to the Terms of Service.';
+    el.classList.remove('hidden');
+    valid = false;
+  }
+  if (users.find(u => u.email === email)) {
+    showError('reg-email', 'An account with this email already exists.'); valid=false;
+  }
+
+  if (!valid) return;
+
+  const newUser = { name, email, password: pass };
+  users.push(newUser);
+  currentUser = newUser;
+  showToast('success', `Account created! Welcome, ${name}!`);
+  setTimeout(() => redirectToApp(newUser), 1800);
+}
+
+/* ══════════════════════════════
+   FORGOT PASSWORD
+══════════════════════════════ */
+function handleForgot() {
+  clearErrors();
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showError('forgot-email', 'Email is required.'); return; }
+  if (!isValidEmail(email)) { showError('forgot-email', 'Enter a valid email address.'); return; }
+
+  // Simulate sending
+  document.getElementById('sent-email').textContent = email;
+  document.getElementById('forgot-form').classList.add('hidden');
+  document.getElementById('forgot-success').classList.remove('hidden');
+  showToast('success', 'Reset link sent to your email!');
+}
+
+/* ══════════════════════════════
+   SOCIAL AUTH (mock)
+══════════════════════════════ */
+function handleGoogle() {
+  showToast('info', 'Signing in with Google…');
+  setTimeout(() => {
+    const gUser = { name:'Ahmed (Google)', email:'ahmed@gmail.com', password:'' };
+    if (!users.find(u => u.email === gUser.email)) users.push(gUser);
+    currentUser = gUser;
+    redirectToApp(gUser);
+  }, 1500);
+}
+
+function handleGithub() {
+  showToast('info', 'Signing in with GitHub…');
+  setTimeout(() => {
+    const ghUser = { name:'Ahmed (GitHub)', email:'ahmed@github.com', password:'' };
+    if (!users.find(u => u.email === ghUser.email)) users.push(ghUser);
+    currentUser = ghUser;
+    redirectToApp(ghUser);
+  }, 1500);
+}
+
+/* ══════════════════════════════
+   REDIRECT TO APP
+══════════════════════════════ */
+function redirectToApp(user) {
+  sessionStorage.setItem('ca_user', JSON.stringify(user));
+  window.location.href = '/codearena/app';
+}
+
+/* ══════════════════════════════
+   UI HELPERS
+══════════════════════════════ */
+function togglePass(inputId, eyeId) {
+  const inp = document.getElementById(inputId);
+  const eye = document.getElementById(eyeId);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    eye.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+  } else {
+    inp.type = 'password';
+    eye.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  }
+}
+
+function toggleCheck(id) {
+  document.getElementById(id).classList.toggle('checked');
+}
+
+function checkStrength(val) {
+  const bars = ['sb1','sb2','sb3','sb4'];
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/\d/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+
+  const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+  bars.forEach((b,i) => {
+    const el = document.getElementById(b);
+    el.style.background = i < score ? colors[score-1] : '#e5e7eb';
+  });
+
+  const hint = document.getElementById('reg-pass-err');
+  const labels = ['','Weak password','Fair — add uppercase','Good — add symbols','Strong password!'];
+  if (val.length > 0) {
+    hint.textContent = labels[score] || 'Must be at least 8 characters with one number.';
+    hint.className = 'text-[11px] mt-1 ' + (['','text-red-500','text-orange-500','text-yellow-600','text-green-600'][score]||'text-gray-400');
+    hint.classList.remove('hidden');
+  } else {
+    hint.textContent = 'Must be at least 8 characters with one number.';
+    hint.className = 'text-[11px] text-gray-400 mt-1';
+  }
+}
+
+let toastTimer;
+function showToast(type, msg) {
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  const txt = document.getElementById('toast-msg');
+  const icons = {
+    success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    error:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    info:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  };
+  ico.innerHTML = icons[type] || icons.info;
+  txt.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ══════════════════════════════
+   THEME
+══════════════════════════════ */
+const SUN_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2"/></svg>';
+const MOON_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+function initTheme() {
+  const saved = localStorage.getItem('ca_theme') || 'light';
+  document.documentElement.classList.toggle('dark', saved === 'dark');
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('ca_theme', isDark ? 'dark' : 'light');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.innerHTML = document.documentElement.classList.contains('dark') ? SUN_ICON : MOON_ICON;
+}
+
+// Redirect if already logged in
+if (sessionStorage.getItem('ca_user') || localStorage.getItem('username')) {
+  const tfUser = localStorage.getItem('username');
+  if (tfUser && !sessionStorage.getItem('ca_user')) {
+    sessionStorage.setItem('ca_user', JSON.stringify({
+      name: tfUser.charAt(0).toUpperCase() + tfUser.slice(1),
+      email: tfUser + '@taskflow.com'
+    }));
+  }
+  window.location.href = '/codearena/app';
+}
+
+initTheme();
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.auth-screen.active');
+  if (!active) return;
+  const id = active.id;
+  if (id==='screen-login')    handleLogin();
+  if (id==='screen-register') handleRegister();
+  if (id==='screen-forgot')   handleForgot();
+});
+</script>
+</body>
+</html>

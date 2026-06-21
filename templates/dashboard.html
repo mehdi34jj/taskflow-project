@@ -1,13 +1,682 @@
-<h1>Dashboard</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','sans-serif'] },
+      colors: {
+        brand: { 50:'#f0efff',100:'#e0deff',200:'#c2bcff',300:'#a39aff',400:'#7c6ff7',500:'#5B4FE9',600:'#4a3fd4',700:'#3730b0',800:'#26238c' }
+      },
+      screens: { xs: '380px' }
+    }
+  }
+}
+</script>
+<style>
+* { font-family:'Inter',sans-serif; box-sizing:border-box; }
+html,body { margin:0; height:100%; background:#f0f0f8; transition:background .2s,color .2s; }
+html.dark, html.dark body { background:#0f1117; color:#e5e7eb; }
+html.dark #sidebar { background:#161b22; box-shadow:2px 0 24px rgba(0,0,0,.3); }
+html.dark #topbar { background:#161b22; border-color:#2d333b; }
+html.dark #bottom-nav { background:#161b22; border-color:#2d333b; }
+html.dark .nav-item { color:#9ca3af; }
+html.dark .nav-item:hover { background:#1f2937; color:#a39aff; }
+html.dark .kcard, html.dark .bg-white { background:#161b22 !important; }
+html.dark .text-gray-900 { color:#f3f4f6 !important; }
+html.dark .text-gray-800 { color:#e5e7eb !important; }
+html.dark .text-gray-700 { color:#d1d5db !important; }
+html.dark .text-gray-600 { color:#9ca3af !important; }
+html.dark .text-gray-500 { color:#9ca3af !important; }
+html.dark .text-gray-400 { color:#6b7280 !important; }
+html.dark .border-gray-100, html.dark .border-gray-200 { border-color:#2d333b !important; }
+html.dark .bg-gray-50 { background:#1f2937 !important; }
+html.dark .bg-gray-100 { background:#1f2937 !important; }
+html.dark input, html.dark textarea, html.dark select { background:#0d1117 !important; border-color:#2d333b !important; color:#e5e7eb !important; }
+html.dark .dashed-add { border-color:#374151; color:#6b7280; }
+html.dark .dashed-add:hover { border-color:#7c6ff7; background:#1f2937; }
+html.dark .cal-day { border-color:#2d333b; color:#d1d5db; }
+html.dark .cal-day.other { color:#4b5563; }
+html.dark .cal-day.today { background:#1e1b4b; }
+html.dark .cal-header-cell { border-color:#2d333b; }
+html.dark #task-modal-box { background:#161b22; }
+html.dark .divide-gray-50 > * { border-color:#2d333b !important; }
 
-<button onclick="window.location.href='/mytasks'">
-    My Tasks
-</button>
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:99px; }
 
-<button onclick="window.location.href='/quiz'">
-    CodeArena
-</button>
+/* ── LAYOUT ── */
+#app { display:flex; height:100dvh; overflow:hidden; position:relative; }
 
-<button onclick="window.location.href='/members'">
+/* ── SIDEBAR ── */
+#sidebar {
+  width:175px; flex-shrink:0;
+  background:#fff; display:flex; flex-direction:column;
+  height:100dvh; overflow-y:auto; z-index:50;
+  box-shadow:2px 0 24px rgba(0,0,0,.06);
+  transition:transform .25s ease;
+}
+/* Mobile: sidebar becomes a drawer */
+@media (max-width:767px) {
+  #sidebar {
+    position:fixed; top:0; left:0;
+    transform:translateX(-100%);
+  }
+  #sidebar.open { transform:translateX(0); }
+  #sidebar-backdrop { display:block; }
+}
+#sidebar-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.4); z-index:40;
+  backdrop-filter:blur(2px);
+}
+/* Tablet: icon-only sidebar */
+@media (min-width:768px) and (max-width:1023px) {
+  #sidebar { width:64px; }
+  .sidebar-label { display:none; }
+  #sidebar-logo-full { display:none; }
+  #sidebar-logo-icon { display:flex; }
+  .sidebar-user-name { display:none; }
+  #sidebar .px-5 { padding:0; display:flex; justify-content:center; }
+  #sidebar nav { padding:0 8px; }
+  #sidebar .px-3 { padding:0 8px; }
+  .nav-item { justify-content:center; padding:10px; }
+  .sidebar-bottom-user { justify-content:center; padding:10px; }
+}
+@media (min-width:1024px) {
+  #sidebar-logo-icon { display:none; }
+}
+
+/* ── MAIN ── */
+#main { flex:1; display:flex; flex-direction:column; height:100dvh; overflow:hidden; min-width:0; }
+
+/* ── TOPBAR ── */
+#topbar { background:#fff; border-bottom:1px solid #f3f4f6; flex-shrink:0; }
+
+/* ── PAGES ── */
+.page { display:none; flex:1; overflow-y:auto; }
+.page.active { display:block; }
+
+/* ── NAV ITEMS ── */
+.nav-item { transition:all .15s; border-radius:10px; width:100%; display:flex; align-items:center; gap:12px; padding:10px 12px; font-size:14px; font-weight:500; color:#6b7280; cursor:pointer; border:none; background:transparent; }
+.nav-item:hover { background:#f0efff; color:#5B4FE9; }
+.nav-item.active { background:#5B4FE9; color:#fff; }
+.nav-item.active svg { color:#fff !important; }
+@media (min-width:768px) and (max-width:1023px) {
+  .nav-item { padding:10px; justify-content:center; gap:0; border-radius:12px; }
+}
+
+/* ── BOTTOM NAV (mobile only) ── */
+#bottom-nav {
+  display:none;
+  position:fixed; bottom:0; left:0; right:0;
+  background:#fff; border-top:1px solid #f3f4f6;
+  z-index:50; padding:8px 0 env(safe-area-inset-bottom,8px);
+}
+@media (max-width:767px) {
+  #bottom-nav { display:flex; }
+  .page.active { padding-bottom:80px; }
+}
+.bnav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 0; background:transparent; border:none; cursor:pointer; color:#9ca3af; font-size:10px; font-weight:500; transition:color .15s; }
+.bnav-btn.active { color:#5B4FE9; }
+.bnav-btn svg { flex-shrink:0; }
+
+/* ── KANBAN CARD ── */
+.kcard { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.kcard-tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:6px; }
+
+/* ── AVATAR STACK ── */
+.av-stack .av { border:2px solid #fff; margin-left:-8px; }
+.av-stack .av:first-child { margin-left:0; }
+
+/* ── CALENDAR ── */
+.cal-day { min-height:60px; border-right:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb; padding:5px 6px; font-size:12px; color:#374151; }
+@media (min-width:768px) { .cal-day { min-height:80px; font-size:13px; padding:6px 8px; } }
+.cal-day:nth-child(7n) { border-right:none; }
+.cal-day.other { color:#d1d5db; }
+.cal-day.today { background:#f0efff; }
+.cal-event { font-size:9px; font-weight:600; padding:2px 5px; border-radius:4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (min-width:768px) { .cal-event { font-size:10px; } }
+.cal-header-cell { font-size:10px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.06em; padding:8px 0; text-align:center; border-bottom:1px solid #e5e7eb; }
+
+/* ── BADGES ── */
+.badge { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:2px 8px; border-radius:6px; }
+.prog-bar { height:6px; background:#e0deff; border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; background:#5B4FE9; border-radius:99px; }
+
+/* ── MODAL ── */
+.modal-wrap { transition:opacity .2s ease; }
+.modal-box  { transition:transform .2s ease, opacity .2s ease; }
+
+/* ── DASHED ADD ── */
+.dashed-add { border:2px dashed #d1d5db; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; padding:20px; color:#9ca3af; transition:all .15s; }
+.dashed-add:hover { border-color:#5B4FE9; color:#5B4FE9; background:#f0efff; }
+
+.member-filter-btn { font-size:12px; font-weight:600; padding:6px 14px; border-radius:999px; border:none; cursor:pointer; background:#f3f4f6; color:#6b7280; transition:all .15s; }
+.member-filter-btn:hover { background:#e0deff; color:#5B4FE9; }
+.member-filter-btn.active { background:#5B4FE9; color:#fff; }
+html.dark .member-filter-btn { background:#1f2937; color:#9ca3af; }
+html.dark .member-filter-btn.active { background:#5B4FE9; color:#fff; }
+
+/* ── STATUS DOTS ── */
+.status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot-active  { background:#22c55e; }
+.dot-meeting { background:#f59e0b; }
+.dot-offline { background:#9ca3af; }
+
+/* ── SELECT ── */
+select { appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ SIDEBAR BACKDROP (mobile) ═══ -->
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sidebar" class="py-5">
+  <!-- Logo -->
+  <div class="px-4 mb-7 flex items-center gap-2">
+    <!-- Full logo (desktop) -->
+    <span id="sidebar-logo-full" class="text-brand-500 font-bold text-xl tracking-tight">TaskFlow</span>
+    <!-- Icon only (tablet) -->
+    <div id="sidebar-logo-icon" class="w-8 h-8 bg-brand-500 rounded-lg items-center justify-center hidden">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
+  </div>
+
+  <nav class="flex-1 px-3 space-y-0.5">
+    <button onclick="goTo('dashboard')" id="nav-dashboard" class="nav-item">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="sidebar-label">Dashboard</span>
+    </button>
+    <button onclick="goTo('mytasks')" id="nav-mytasks" class="nav-item">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="sidebar-label">My Tasks</span>
+    </button>
+    <button onclick="goTo('calendar')" id="nav-calendar" class="nav-item">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="sidebar-label">Calendar</span>
+    </button>
+    <button onclick="goTo('members')" id="nav-members" class="nav-item">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="sidebar-label">Members</span>
+    </button>
+    <button onclick="goToCodeArena()" class="nav-item">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span class="sidebar-label">CodeArena</span>
+    </button>
+  </nav>
+
+  <div class="px-3 mt-4 border-t border-gray-100 pt-4 space-y-0.5">
+    <button onclick="toggleDarkMode()" id="nav-settings" class="nav-item">
+      <svg id="theme-icon-sun" class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2"/></svg>
+      <svg id="theme-icon-moon" class="w-4 h-4 flex-shrink-0 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <span class="sidebar-label" id="theme-label">Dark Mode</span>
+    </button>
+    <div class="sidebar-bottom-user flex items-center gap-2.5 px-3 py-2.5 mt-1 rounded-xl">
+      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed&backgroundColor=b6e3f4" class="w-8 h-8 rounded-full flex-shrink-0" alt="Ahmed">
+      <div class="sidebar-user-name min-w-0">
+        <p class="text-sm font-semibold text-gray-800 truncate">Ahmed</p>
+        <p class="text-[11px] text-gray-400 truncate">Lead Developer</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <!-- TOP BAR -->
+  <header id="topbar" class="px-4 md:px-6 py-3 flex items-center gap-3">
+    <!-- Hamburger (mobile) -->
+    <button onclick="openSidebar()" class="md:hidden w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 flex-shrink-0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <!-- Search -->
+    <div class="flex-1 relative min-w-0 max-w-sm">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="task-search" type="text" placeholder="Search task, code or members.." class="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-300/40 focus:border-brand-400 transition-all placeholder:text-gray-400 text-gray-700">
+    </div>
+    <div class="flex-1 hidden sm:block"></div>
+    <button onclick="openTaskModal()" class="flex items-center gap-1.5 px-3 md:px-4 py-2 bg-brand-500 text-white text-sm font-semibold rounded-xl hover:bg-brand-600 transition-colors shadow-sm flex-shrink-0">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="hidden sm:inline">New Task</span>
+    </button>
+    <button class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-50 relative">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+    </button>
+  </header>
+
+  <!-- ════ PAGE: DASHBOARD ════ -->
+  <div id="page-dashboard" class="page px-4 md:px-6 py-5">
+    <div class="mb-5">
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">Hello, <span id="user-greeting">Ahmed</span> 👋</h1>
+      <p class="text-gray-500 text-sm mt-0.5">You have <span id="dash-task-count">0</span> tasks to complete today.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div class="bg-white rounded-2xl p-4 shadow-sm">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <span class="text-[11px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+12%</span>
+        </div>
+        <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-0.5">Completed</p>
+        <p id="stat-completed" class="text-2xl font-bold text-gray-900">0</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span class="text-[11px] font-semibold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">Active</span>
+        </div>
+        <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-0.5">In Progress</p>
+        <p id="stat-inprog" class="text-2xl font-bold text-gray-900">0</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="goToCodeArena()">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Quiz</span>
+        </div>
+        <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-0.5">CodeArena</p>
+        <p id="stat-quiz" class="text-2xl font-bold text-gray-900">3</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="flex items-center">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=s1&backgroundColor=b6e3f4" class="w-5 h-5 rounded-full border-2 border-white" alt="">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=s2&backgroundColor=ffdfbf" class="w-5 h-5 rounded-full border-2 border-white -ml-1.5" alt="">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=s3&backgroundColor=ffd5dc" class="w-5 h-5 rounded-full border-2 border-white -ml-1.5" alt="">
+          </div>
+        </div>
+        <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-0.5">Total Tasks</p>
+        <p id="stat-total" class="text-2xl font-bold text-gray-900">0</p>
+      </div>
+    </div>
+
+    <!-- Bottom split: stacks on mobile/tablet -->
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-4">
+      <!-- Task list -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 class="font-bold text-gray-900">Today's Activity</h2>
+          <button onclick="goTo('mytasks')" class="text-brand-500 text-sm font-medium">View All</button>
+        </div>
+        <div id="dash-task-list" class="divide-y divide-gray-50"></div>
+      </div>
+      <!-- Side widgets -->
+      <div class="flex flex-col gap-4">
+        <!-- Activity Feed -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h2 class="font-bold text-gray-900 mb-4">Activity Feed</h2>
+          <div class="space-y-3">
+            <div class="flex gap-3"><div class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1.5"></div><div class="text-sm text-gray-600 leading-snug"><strong class="text-gray-900">Sarah</strong> merged a pull request in <span class="text-brand-500 font-semibold">Core UI</span><p class="text-[11px] text-gray-400 mt-0.5">2 mins ago</p></div></div>
+            <div class="flex gap-3"><div class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1.5"></div><div class="text-sm text-gray-600 leading-snug"><strong class="text-gray-900">You</strong> updated status of "Refactor Middleware" to <span class="text-brand-500 font-semibold">Completed</span><p class="text-[11px] text-gray-400 mt-0.5">2 mins ago</p></div></div>
+            <div class="flex gap-3"><div class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1.5"></div><div class="text-sm text-gray-600 leading-snug"><strong class="text-gray-900">Alex</strong> commented on "Design Docs"<p class="text-[11px] text-gray-400 mt-0.5">2 mins ago</p><div class="mt-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-[12px] text-gray-500 italic">"Looking good! Can we add the new color tokens for dark mode?"</div></div></div>
+          </div>
+        </div>
+        <!-- Team Sync -->
+        <div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#5B4FE9,#3730b0)">
+          <h3 class="font-bold text-lg mb-1">Team Sync</h3>
+          <p class="text-white/70 text-xs mb-4">Today, 5:00 PM – 6:00 PM</p>
+          <div class="flex items-center mb-4">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=a1&backgroundColor=b6e3f4" class="w-8 h-8 rounded-full border-2 border-white/40" alt="">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=a2&backgroundColor=ffd5dc" class="w-8 h-8 rounded-full border-2 border-white/40 -ml-2" alt="">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=a3&backgroundColor=d1f4e0" class="w-8 h-8 rounded-full border-2 border-white/40 -ml-2" alt="">
+            <div class="w-8 h-8 rounded-full border-2 border-white/40 bg-white/20 flex items-center justify-center text-[11px] font-bold -ml-2">+4</div>
+          </div>
+          <button class="w-full bg-white text-brand-600 font-semibold text-sm py-2.5 rounded-xl hover:bg-brand-50 transition-colors">Join Meeting</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PAGE: MY TASKS ════ -->
+  <div id="page-mytasks" class="page px-4 md:px-6 py-5">
+    <div id="member-filters" class="flex items-center gap-2 mb-4 flex-wrap"></div>
+    <!-- On mobile: vertical stack. Tablet: 2 cols. Desktop: 3 cols -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- TO DO -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-gray-900">To do</h2>
+            <span id="count-todo" class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center">0</span>
+          </div>
+          <button class="text-gray-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+        </div>
+        <div id="col-todo" class="space-y-3"></div>
+        <div class="dashed-add mt-3" onclick="openTaskModal('todo')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span class="text-sm font-medium">New Task</span>
+        </div>
+      </div>
+      <!-- IN PROGRESS -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-gray-900">In progress</h2>
+            <span id="count-inprog" class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center">0</span>
+          </div>
+          <button class="text-gray-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+        </div>
+        <div id="col-inprog" class="space-y-3"></div>
+      </div>
+      <!-- DONE -->
+      <div class="sm:col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-gray-900">Done</h2>
+            <span id="count-done" class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center">0</span>
+          </div>
+          <button class="text-gray-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+        </div>
+        <div id="col-done" class="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 lg:block lg:space-y-3 lg:grid-cols-none"></div>
+      </div>
+    </div>
+    <!-- FAB -->
+    <button onclick="openTaskModal('todo')" class="fixed bottom-20 md:bottom-7 right-5 md:right-7 w-12 h-12 bg-brand-500 text-white rounded-2xl shadow-lg flex items-center justify-center hover:bg-brand-600 transition-colors text-2xl font-light z-40">+</button>
+  </div>
+
+  <!-- ════ PAGE: CALENDAR ════ -->
+  <div id="page-calendar" class="page px-4 md:px-6 py-5">
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-4">
+      <!-- Calendar -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-brand-300">
+        <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b border-gray-100 gap-2 flex-wrap">
+          <h2 class="font-bold text-gray-900" id="cal-month-label">June 2026</h2>
+          <div class="flex items-center gap-2">
+            <button onclick="calPrev()" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button onclick="calNext()" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <div class="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <button class="px-2.5 py-1 text-xs font-semibold bg-white rounded-md shadow-sm text-gray-700">Month</button>
+              <button class="px-2.5 py-1 text-xs font-medium text-gray-400">Week</button>
+              <button class="px-2.5 py-1 text-xs font-medium text-gray-400">Day</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-7">
+          <div class="cal-header-cell">MON</div><div class="cal-header-cell">TUE</div><div class="cal-header-cell">WED</div>
+          <div class="cal-header-cell">THU</div><div class="cal-header-cell">FRI</div><div class="cal-header-cell">SAT</div><div class="cal-header-cell">SUN</div>
+        </div>
+        <div id="cal-grid" class="grid grid-cols-7"></div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="flex flex-col gap-4">
+        <!-- Events -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-gray-900 text-sm md:text-base">Events for <span id="cal-selected-label">Jun 11</span></h2>
+            <span class="text-[11px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">2 EVENTS</span>
+          </div>
+          <div class="space-y-3">
+            <div class="border border-gray-100 rounded-xl p-3">
+              <div class="flex items-start justify-between mb-1 gap-2">
+                <p class="font-semibold text-sm text-gray-900 leading-snug">Sprint Planning Demo</p>
+                <span class="text-[11px] text-gray-400 font-medium whitespace-nowrap">10:00 AM</span>
+              </div>
+              <p class="text-[12px] text-gray-500 leading-relaxed mb-2">Reviewing technical architecture for Q4 roadmap with engineering leads.</p>
+              <div class="flex items-center">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=e1&backgroundColor=b6e3f4" class="w-6 h-6 rounded-full border-2 border-white" alt="">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=e2&backgroundColor=ffd5dc" class="w-6 h-6 rounded-full border-2 border-white -ml-2" alt="">
+                <div class="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500 -ml-2">+4</div>
+              </div>
+            </div>
+            <div class="border border-gray-100 rounded-xl p-3">
+              <div class="flex items-start justify-between mb-1 gap-2">
+                <p class="font-semibold text-sm text-gray-900 leading-snug">Design Sync & Critique</p>
+                <span class="text-[11px] text-gray-400 font-medium whitespace-nowrap">02:30 PM</span>
+              </div>
+              <p class="text-[12px] text-gray-500 leading-relaxed mb-2">Weekly review of the new UI component library and accessibility compliance.</p>
+              <div class="flex items-center">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=e4&backgroundColor=b6e3f4" class="w-6 h-6 rounded-full border-2 border-white" alt="">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=e5&backgroundColor=ffdfbf" class="w-6 h-6 rounded-full border-2 border-white -ml-2" alt="">
+              </div>
+            </div>
+            <div class="dashed-add py-3">
+              <div class="flex items-center gap-2 text-sm font-medium">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                New task at 4:00 pm
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Team Availability -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <h2 class="font-bold text-brand-500 text-sm md:text-base">Team Availability</h2>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="status-dot dot-active"></div><span class="text-sm text-gray-700 font-medium">Sarah Connor</span></div><span class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Available</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="status-dot dot-meeting"></div><span class="text-sm text-gray-700 font-medium">Mark J.</span></div><span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">In Meeting</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="status-dot dot-active"></div><span class="text-sm text-gray-700 font-medium">Alex Chen</span></div><span class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Available</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="fixed bottom-20 md:bottom-7 right-5 md:right-7 w-12 h-12 bg-brand-500 text-white rounded-2xl shadow-lg flex items-center justify-center hover:bg-brand-600 transition-colors text-2xl font-light z-40">+</button>
+  </div>
+
+  <!-- ════ PAGE: MEMBERS ════ -->
+  <div id="page-members" class="page px-4 md:px-6 py-5">
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-4">
+      <!-- Left: members grid -->
+      <div>
+        <!-- Filters -->
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <button class="px-3 py-1.5 bg-brand-500 text-white text-xs md:text-sm font-semibold rounded-full">All (12)</button>
+          <button class="px-3 py-1.5 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-800 rounded-full hover:bg-white transition-colors">Design</button>
+          <button class="px-3 py-1.5 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-800 rounded-full hover:bg-white transition-colors">Engineering</button>
+          <button class="px-3 py-1.5 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-800 rounded-full hover:bg-white transition-colors">Marketing</button>
+          <div class="hidden md:flex items-center gap-1.5 ml-auto text-sm text-gray-500 font-medium cursor-pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="14" y2="14"/><line x1="21" y1="18" x2="14" y2="18"/></svg>
+            Sort: Recently Active
+          </div>
+        </div>
+        <!-- Cards grid: 1 col mobile, 2 tablet, 3 desktop -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Sarah -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=b6e3f4" class="w-11 h-11 rounded-full" alt="">
+              <button class="text-gray-300 hover:text-gray-500"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            </div>
+            <p class="font-bold text-gray-900 text-sm">Sarah Miller</p>
+            <p class="text-[12px] text-gray-400 mb-2">Senior UI/UX Designer</p>
+            <div class="flex flex-wrap gap-1 mb-3"><span class="badge" style="background:#ede9ff;color:#5B4FE9">Design</span><span class="badge" style="background:#f0f9ff;color:#0369a1">Remote</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-1.5"><div class="status-dot dot-active"></div><span class="text-[11px] text-green-600 font-semibold">Active</span></div><button class="text-[11px] font-semibold text-brand-500">View Profile</button></div>
+          </div>
+          <!-- Marcus -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus&backgroundColor=ffdfbf" class="w-11 h-11 rounded-full" alt="">
+              <button class="text-gray-300 hover:text-gray-500"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            </div>
+            <p class="font-bold text-gray-900 text-sm">Marcus Chen</p>
+            <p class="text-[12px] text-gray-400 mb-2">Backend Specialist</p>
+            <div class="flex flex-wrap gap-1 mb-3"><span class="badge" style="background:#e8f5e9;color:#2e7d32">Engineering</span><span class="badge" style="background:#f0fdf4;color:#166534">HQ</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-1.5"><div class="status-dot dot-meeting"></div><span class="text-[11px] text-amber-500 font-semibold">In Meeting</span></div><button class="text-[11px] font-semibold text-brand-500">View Profile</button></div>
+          </div>
+          <!-- Elena -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Elena&backgroundColor=d1f4e0" class="w-11 h-11 rounded-full" alt="">
+              <button class="text-gray-300 hover:text-gray-500"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            </div>
+            <p class="font-bold text-gray-900 text-sm">Elena Rodriguez</p>
+            <p class="text-[12px] text-gray-400 mb-2">Product Strategy</p>
+            <div class="flex flex-wrap gap-1 mb-3"><span class="badge" style="background:#fce4ec;color:#c62828">Management</span><span class="badge" style="background:#faf5ff;color:#7e22ce">Hybrid</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-1.5"><div class="status-dot dot-offline"></div><span class="text-[11px] text-gray-400 font-semibold">Offline</span></div><button class="text-[11px] font-semibold text-brand-500">View Profile</button></div>
+          </div>
+          <!-- Sophia -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=ffd5dc" class="w-11 h-11 rounded-full" alt="">
+              <button class="text-gray-300 hover:text-gray-500"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            </div>
+            <p class="font-bold text-gray-900 text-sm">Sophia Loren</p>
+            <p class="text-[12px] text-gray-400 mb-2">Marketing Lead</p>
+            <div class="flex flex-wrap gap-1 mb-3"><span class="badge" style="background:#fff8e1;color:#f57f17">Marketing</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-1.5"><div class="status-dot dot-active"></div><span class="text-[11px] text-green-600 font-semibold">Active</span></div><button class="text-[11px] font-semibold text-brand-500">View Profile</button></div>
+          </div>
+          <!-- David -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=David&backgroundColor=c0aaf7" class="w-11 h-11 rounded-full" alt="">
+              <button class="text-gray-300 hover:text-gray-500"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            </div>
+            <p class="font-bold text-gray-900 text-sm">David Kim</p>
+            <p class="text-[12px] text-gray-400 mb-2">Full Stack Developer</p>
+            <div class="flex flex-wrap gap-1 mb-3"><span class="badge" style="background:#e8f5e9;color:#2e7d32">Engineering</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-1.5"><div class="status-dot dot-active"></div><span class="text-[11px] text-green-600 font-semibold">Active</span></div><button class="text-[11px] font-semibold text-brand-500">View Profile</button></div>
+          </div>
+          <!-- Add New -->
+          <div class="dashed-add min-h-[160px]">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <p class="font-semibold text-sm">Add New Member</p>
+            <p class="text-[11px] text-center">Expand your team</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="flex flex-col gap-4">
+        <!-- Team Strength -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <h2 class="font-bold text-gray-900">Team Strength</h2>
+          </div>
+          <div class="mb-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[12px] text-gray-500">Current Availability</span>
+              <span class="text-[12px] font-bold text-brand-500">84%</span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:84%"></div></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <div class="bg-brand-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-brand-500">18</p><p class="text-[11px] text-gray-500 font-medium">Active</p></div>
+            <div class="bg-amber-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-amber-500">4</p><p class="text-[11px] text-gray-500 font-medium">In Meeting</p></div>
+          </div>
+          <div class="mt-4">
+            <p class="text-[11px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Top Skills</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="text-[12px] font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">React.js</span>
+              <span class="text-[12px] font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Figma</span>
+              <span class="text-[12px] font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Python</span>
+              <span class="text-[12px] font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Agile</span>
+              <span class="text-[12px] font-medium bg-brand-100 text-brand-500 px-3 py-1 rounded-full">+12 more</span>
+            </div>
+          </div>
+          <button class="mt-4 w-full border-2 border-brand-500 text-brand-500 font-semibold text-sm py-2.5 rounded-xl hover:bg-brand-50 transition-colors">Download Team Report</button>
+        </div>
+        <!-- Status Updates -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 border-2 border-brand-200">
+          <h2 class="font-bold text-gray-900 mb-4">Recent Status Updates</h2>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=b6e3f4" class="w-8 h-8 rounded-full flex-shrink-0" alt=""><div class="text-sm leading-snug"><strong class="text-gray-900">Sarah</strong> <span class="text-gray-600">updated her status to</span> <span class="text-green-500 font-semibold">Available</span><p class="text-[11px] text-gray-400 mt-0.5">2 mins ago</p></div></div>
+            <div class="flex items-start gap-3"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus&backgroundColor=ffdfbf" class="w-8 h-8 rounded-full flex-shrink-0" alt=""><div class="text-sm leading-snug"><strong class="text-gray-900">Marcus</strong> <span class="text-gray-600">joined</span> <span class="text-brand-500 font-semibold">"Daily Sync"</span><p class="text-[11px] text-gray-400 mt-0.5">15 mins ago</p></div></div>
+            <div class="flex items-start gap-3"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Elena&backgroundColor=d1f4e0" class="w-8 h-8 rounded-full flex-shrink-0" alt=""><div class="text-sm leading-snug"><strong class="text-gray-900">Elena</strong> <span class="text-gray-600">is now</span> <span class="text-gray-500 font-semibold">Offline</span><p class="text-[11px] text-gray-400 mt-0.5">1 hour ago</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="fixed bottom-20 md:bottom-7 right-5 md:right-7 w-12 h-12 bg-brand-500 text-white rounded-2xl shadow-lg flex items-center justify-center hover:bg-brand-600 transition-colors text-2xl font-light z-40">+</button>
+  </div>
+
+</div><!-- end #main -->
+
+<!-- ═══ MOBILE BOTTOM NAV ═══ -->
+<nav id="bottom-nav">
+  <button class="bnav-btn active" id="bnav-dashboard" onclick="goTo('dashboard')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Home
+  </button>
+  <button class="bnav-btn" id="bnav-mytasks" onclick="goTo('mytasks')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Tasks
+  </button>
+  <button class="bnav-btn" id="bnav-calendar" onclick="goTo('calendar')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendar
+  </button>
+  <button class="bnav-btn" id="bnav-members" onclick="goTo('members')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Members
-</button>
+  </button>
+</nav>
+
+</div><!-- end #app -->
+
+<!-- ═══ TASK MODAL ═══ -->
+<div id="task-modal" class="modal-wrap fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center sm:p-5 opacity-0 pointer-events-none" onclick="handleModalBd(event)">
+  <div id="task-modal-box" class="modal-box bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl translate-y-3 opacity-0">
+    <div class="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-bold text-gray-900 text-lg" id="task-modal-title">New Task</h2>
+      <button onclick="closeTaskModal()" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 text-xl">×</button>
+    </div>
+    <div class="px-5 py-4 space-y-3">
+      <div>
+        <label class="block text-[11px] uppercase tracking-wider text-gray-400 mb-1.5">Title *</label>
+        <input id="m-title" type="text" placeholder="Task name…" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-400 transition-all placeholder:text-gray-400">
+      </div>
+      <div>
+        <label class="block text-[11px] uppercase tracking-wider text-gray-400 mb-1.5">Description</label>
+        <textarea id="m-desc" rows="2" placeholder="Short description…" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-400 transition-all placeholder:text-gray-400 resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-gray-400 mb-1.5">Tag</label>
+          <select id="m-tag" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-400/30 bg-white cursor-pointer">
+            <option value="UI Design">UI Design</option><option value="Development">Development</option><option value="Research">Research</option><option value="Front End">Front End</option><option value="CodeArena">CodeArena</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-gray-400 mb-1.5">Status</label>
+          <select id="m-status" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-400/30 bg-white cursor-pointer">
+            <option value="todo">To Do</option><option value="inprog">In Progress</option><option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-[11px] uppercase tracking-wider text-gray-400 mb-1.5">Assigned to</label>
+        <select id="m-member" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-400/30 bg-white cursor-pointer">
+          <option value="">Select member…</option>
+        </select>
+      </div>
+    </div>
+    <div class="px-5 pb-5 border-t border-gray-100 pt-4 flex gap-2 justify-end">
+      <button onclick="closeTaskModal()" class="text-sm px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600">Cancel</button>
+      <button onclick="saveNewTask()" class="text-sm px-5 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -7,6 +7,8 @@
 
     <h1>CodeArena Quiz</h1>
 
+    <a id="back-dashboard" href="/dashboard">← Back to Dashboard</a>
+
     <h2 id="timer">
         Time Left: 30s
     </h2>
@@ -20,6 +22,14 @@
     <h2 id="result"></h2>
 
     <script src="{{ url_for('static', filename='js/quize.js') }}"></script>
+    <script>
+      (function () {
+        var back = document.getElementById('back-dashboard');
+        if (window.location.port === '5501' || window.location.port === '5500') {
+          back.href = 'http://127.0.0.1:5501/index.html';
+        }
+      })();
+    </script>
 
 </body>
 </html> 

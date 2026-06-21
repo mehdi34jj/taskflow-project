@@ -1,16 +1,124 @@
 {
   "task": [
     {
-      "id": 7,
-      "title": "mehdi",
+      "id": 1,
+      "title": "Prepare API Endpoints for CodeArena",
+      "desc": "Build /questions and /submit routes for the Python quiz scoring system.",
+      "status": "Terminé",
+      "assigned_to": "Personne 1",
+      "tag": "Development",
+      "urgent": false,
+      "live": true,
+      "info": "3",
+      "infoIcon": "mic"
+    },
+    {
+      "id": 2,
+      "title": "CodeArena Quiz UI",
+      "desc": "Design the quiz page with timer, question cards, and score results display.",
+      "status": "Terminé",
+      "assigned_to": "Personne 2",
+      "tag": "UI Design",
+      "urgent": true,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
+    },
+    {
+      "id": 3,
+      "title": "Write Python quiz questions",
+      "desc": "Create easy and medium difficulty questions in questions.json for CodeArena.",
       "status": "À faire",
-      "assigned_to": ""
+      "assigned_to": "Personne 4",
+      "tag": "Research",
+      "urgent": false,
+      "live": false,
+      "info": "9",
+      "infoIcon": "chat"
+    },
+    {
+      "id": 4,
+      "title": "Dark mode for TaskFlow dashboard",
+      "desc": "Test all color contrasts against WCAG 2.1 standards for dark mode compatibility.",
+      "status": "À faire",
+      "assigned_to": "Personne 2",
+      "tag": "UI Design",
+      "urgent": false,
+      "live": false,
+      "info": "2d left",
+      "infoIcon": "clock"
+    },
+    {
+      "id": 5,
+      "title": "Connect login to dashboard",
+      "desc": "Fix post-login redirect so the full TaskFlow dashboard loads instead of a blank page.",
+      "status": "Terminé",
+      "assigned_to": "Personne 3",
+      "tag": "Front End",
+      "urgent": false,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
+    },
+    {
+      "id": 6,
+      "title": "Integrate CodeArena in sidebar",
+      "desc": "Add CodeArena navigation link and quiz stat card on the dashboard.",
+      "status": "Terminé",
+      "assigned_to": "Personne 3",
+      "tag": "Front End",
+      "urgent": false,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
+    },
+    {
+      "id": 7,
+      "title": "Task API CRUD endpoints",
+      "desc": "Implement GET, POST, PUT, DELETE for /task to manage CodeArena project tasks.",
+      "status": "Terminé",
+      "assigned_to": "Personne 1",
+      "tag": "Development",
+      "urgent": false,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
+    },
+    {
+      "id": 8,
+      "title": "Kanban board for My Tasks",
+      "desc": "Build the To do / In progress / Done columns with member avatars and task cards.",
+      "status": "Terminé",
+      "assigned_to": "Personne 3",
+      "tag": "Front End",
+      "urgent": false,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
     },
     {
       "id": 9,
-      "title": "mehdi ",
-      "status": "À faire",
-      "assigned_to": ""
+      "title": "Quiz timer & submit flow",
+      "desc": "Add 30-second countdown timer and answer submission to CodeArena quiz page.",
+      "status": "En cours",
+      "assigned_to": "Personne 4",
+      "tag": "Research",
+      "urgent": false,
+      "live": false,
+      "info": "5",
+      "infoIcon": "chat"
+    },
+    {
+      "id": 10,
+      "title": "User authentication for admin",
+      "desc": "Set up login page with users.json credentials for secure access to TaskFlow.",
+      "status": "Terminé",
+      "assigned_to": "Personne 1",
+      "tag": "Development",
+      "urgent": false,
+      "live": false,
+      "info": "",
+      "infoIcon": ""
     }
   ],
   "members": [

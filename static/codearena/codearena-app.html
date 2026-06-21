@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeArena</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','sans-serif'] },
+      colors: {
+        brand: { 50:'#f0efff',100:'#e0deff',200:'#c2bcff',300:'#a39aff',400:'#7c6ff7',500:'#5B4FE9',600:'#4a3fd4',700:'#3730b0',800:'#26238c' }
+      }
+    }
+  }
+}
+</script>
+<style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;}
+html,body{margin:0;background:#eeeef8;min-height:100vh;transition:background-color .2s,color .2s;}
+html.dark,html.dark body{background:#0f0f1a;}
+html.dark nav,html.dark footer{background:#1a1a2e !important;border-color:#2a2a40 !important;}
+html.dark .bg-white{background:#1a1a2e !important;}
+html.dark .text-gray-900{color:#f3f4f6 !important;}
+html.dark .text-gray-800{color:#e5e7eb !important;}
+html.dark .text-gray-700{color:#d1d5db !important;}
+html.dark .text-gray-600{color:#9ca3af !important;}
+html.dark .text-gray-500{color:#9ca3af !important;}
+html.dark .text-gray-400{color:#6b7280 !important;}
+html.dark .border-gray-100,html.dark .border-gray-200{border-color:#2a2a40 !important;}
+html.dark .divide-gray-50>:not([hidden])~:not([hidden]){border-color:#2a2a40;}
+html.dark .bg-gray-50{background:#12121f !important;}
+html.dark .bg-gray-100{background:#1f1f35 !important;}
+html.dark .hover\:bg-gray-50:hover{background:#1f1f35 !important;}
+html.dark .hover\:bg-gray-100:hover{background:#2a2a40 !important;}
+html.dark .quiz-opt{background:#1a1a2e;border-color:#2a2a40;}
+html.dark .quiz-opt:hover{background:#1f1f35;border-color:#a39aff;}
+html.dark .quiz-opt.selected{background:#262350;border-color:#5B4FE9;}
+html.dark .badge-card{background:#1f1f35;border-color:#2a2a40;}
+html.dark .lb-row{border-color:#2a2a40;}
+html.dark .lb-row:hover{background:#1f1f35;}
+html.dark .lb-row.me{background:#262350;}
+html.dark #toast{background:#1a1a2e;border-color:#2a2a40;color:#e5e7eb;}
+html.dark #mobile-nav{background:#1a1a2e;border-color:#2a2a40;}
+html.dark .nav-link{color:#9ca3af;}
+html.dark .nav-link:hover,html.dark .nav-link.active{color:#a39aff;}
+html.dark .streak-dot{background:#2a2a40;}
+html.dark .border-gray-100.rounded-xl{border-color:#2a2a40;}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;animation:fadeUp .25s ease forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* NAV ACTIVE */
+.nav-link{position:relative;font-size:14px;font-weight:500;color:#6b7280;transition:color .15s;background:none;border:none;cursor:pointer;padding:4px 0;}
+.nav-link:hover{color:#5B4FE9;}
+.nav-link.active{color:#5B4FE9;font-weight:600;}
+.nav-link.active::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:2px;background:#5B4FE9;border-radius:99px;}
+
+/* XP BAR */
+.xp-fill{height:100%;background:linear-gradient(90deg,#a39aff,#5B4FE9);border-radius:99px;transition:width .6s ease;}
+
+/* QUIZ OPTION */
+.quiz-opt{border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:12px;background:#fff;}
+.quiz-opt:hover{border-color:#a39aff;background:#f8f7ff;}
+.quiz-opt.selected{border-color:#5B4FE9;background:#f0efff;}
+.quiz-opt.correct{border-color:#16a34a;background:#f0fdf4 !important;}
+.quiz-opt.wrong{border-color:#dc2626;background:#fef2f2 !important;}
+.opt-letter{width:28px;height:28px;border-radius:8px;background:#f0efff;color:#5B4FE9;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;}
+.quiz-opt.selected .opt-letter{background:#5B4FE9;color:#fff;}
+.quiz-opt.correct .opt-letter{background:#16a34a;color:#fff;}
+.quiz-opt.wrong .opt-letter{background:#dc2626;color:#fff;}
+
+/* STREAK DOTS */
+.streak-day{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:#9ca3af;}
+.streak-dot{width:28px;height:6px;border-radius:99px;background:#e5e7eb;}
+.streak-dot.done{background:#5B4FE9;}
+.streak-dot.today{background:#f59e0b;}
+
+/* BADGE CARD */
+.badge-card{background:#f8f7ff;border-radius:14px;padding:16px;text-align:center;border:1.5px solid #e0deff;}
+
+/* LEADERBOARD PODIUM */
+.podium-1{background:linear-gradient(160deg,#f59e0b,#d97706);color:#fff;border-radius:16px;padding:20px 16px;text-align:center;}
+.podium-2{background:linear-gradient(160deg,#94a3b8,#64748b);color:#fff;border-radius:16px;padding:16px;text-align:center;}
+.podium-3{background:linear-gradient(160deg,#cd7f32,#a16207);color:#fff;border-radius:16px;padding:16px;text-align:center;}
+
+/* TABLE ROW */
+.lb-row{display:grid;grid-template-columns:60px 1fr 100px 80px 60px;align-items:center;padding:12px 16px;border-bottom:1px solid #f3f4f6;gap:8px;}
+.lb-row:hover{background:#fafafa;}
+.lb-row.me{background:#f0efff;border-radius:8px;border-bottom:none;}
+
+/* TOAST */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);opacity:0;z-index:9999;transition:all .3s cubic-bezier(.34,1.56,.64,1);background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:10px 18px;box-shadow:0 8px 32px rgba(0,0,0,.12);font-size:13px;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* MOBILE NAV */
+#mobile-nav{display:none;}
+@media(max-width:767px){
+  #mobile-nav{display:flex;}
+  #desktop-nav{display:none;}
+  .page.active{padding-bottom:80px;}
+}
+
+/* PROGRESS RING */
+.ring-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+circle.track{fill:none;stroke:#e5e7eb;stroke-width:6;}
+circle.prog{fill:none;stroke:#5B4FE9;stroke-width:6;stroke-linecap:round;stroke-dasharray:188.5;stroke-dashoffset:47;transition:stroke-dashoffset .6s ease;}
+
+/* CODE BLOCK */
+.code-block{background:#1e1e2e;border-radius:12px;padding:16px 20px;font-family:'Courier New',monospace;font-size:14px;color:#cdd6f4;position:relative;}
+.code-dots{display:flex;gap:6px;margin-bottom:10px;}
+.code-dot{width:10px;height:10px;border-radius:50%;}
+
+/* DIFFICULTY BADGE */
+.diff-easy{background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
+.diff-med {background:#fef9c3;color:#a16207;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
+.diff-hard{background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
+
+/* TIMER */
+#quiz-timer{font-variant-numeric:tabular-nums;}
+.timer-warn{color:#ef4444 !important;}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"><span id="toast-icon"></span><span id="toast-msg"></span></div>
+
+<!-- ═══════════════ NAVBAR ═══════════════ -->
+<nav class="bg-white border-b border-gray-100 sticky top-0 z-40">
+  <div class="max-w-5xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
+    <!-- Logo -->
+    <button onclick="goTo('home')" class="text-brand-500 font-extrabold text-lg tracking-tight flex-shrink-0">CodeArena</button>
+
+    <!-- Desktop Nav -->
+    <div id="desktop-nav" class="flex items-center gap-6">
+      <a href="/dashboard" class="text-xs font-semibold text-gray-400 hover:text-brand-500 transition-colors flex items-center gap-1 flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        TaskFlow
+      </a>
+      <button onclick="goTo('home')"        id="nav-home"        class="nav-link active">Home</button>
+      <button onclick="goTo('quizzes')"     id="nav-quizzes"     class="nav-link">Quizzes</button>
+      <button onclick="goTo('leaderboard')" id="nav-leaderboard" class="nav-link">Leaderboard</button>
+      <button onclick="goTo('about')"       id="nav-about"       class="nav-link">About</button>
+    </div>
+
+    <!-- User -->
+    <div class="flex items-center gap-2">
+      <button onclick="goTo('profile')" class="flex items-center gap-2 hover:bg-gray-50 px-2 py-1.5 rounded-xl transition-colors">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed&backgroundColor=b6e3f4" class="w-7 h-7 rounded-full bg-blue-100" alt="Ahmed">
+        <span class="text-sm font-semibold text-gray-800 hidden sm:inline" id="nav-username">Ahmed</span>
+        <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded-full hidden md:inline" id="nav-level">LVL 12</span>
+      </button>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 transition-colors">
+      </button>
+      <button onclick="handleLogout()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 transition-colors" title="Logout">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════ PAGES WRAPPER ═══════════════ -->
+<div class="max-w-5xl mx-auto px-4 md:px-6 py-6">
+
+<!-- ════ PAGE: HOME / DASHBOARD ════ -->
+<div id="page-home" class="page active">
+  <div class="mb-5">
+    <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
+    <p class="text-sm text-gray-500">Your learning journey at a glance.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
+    <div class="space-y-5">
+
+      <!-- Welcome Banner -->
+      <div class="rounded-2xl p-6 text-white relative overflow-hidden" style="background:linear-gradient(135deg,#5B4FE9,#3730b0)">
+        <div class="absolute right-0 top-0 w-40 h-40 rounded-full opacity-10" style="background:white;transform:translate(30%,-30%)"></div>
+        <div class="absolute right-10 bottom-0 w-24 h-24 rounded-full opacity-10" style="background:white;transform:translateY(40%)"></div>
+        <div class="flex items-start justify-between flex-wrap gap-2">
+          <div>
+            <h2 class="text-xl md:text-2xl font-bold mb-1">Welcome Back <span id="banner-name">Ahmed</span> 👋</h2>
+            <p class="text-white/70 text-sm">You're on a 5-day streak! Complete today's quiz to hit level 13.</p>
+          </div>
+          <span class="text-xs font-bold bg-white/20 border border-white/30 px-3 py-1.5 rounded-full">Level 12</span>
+        </div>
+        <div class="mt-5">
+          <div class="flex justify-between text-xs text-white/70 mb-1.5">
+            <span id="xp-current">8,450 XP</span>
+            <span>10,000 XP for Lv 13</span>
+          </div>
+          <div class="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div class="xp-fill" id="xp-bar" style="width:84.5%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+          <div class="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-0.5">Total Quizzes</p>
+          <p class="text-2xl font-bold text-gray-900" id="stat-quizzes">24</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+          <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-0.5">Avg Score</p>
+          <p class="text-2xl font-bold text-gray-900">85%</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+          <div class="w-9 h-9 bg-yellow-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-0.5">Best Score</p>
+          <p class="text-2xl font-bold text-gray-900">100%</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+          <div class="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-0.5">Level</p>
+          <p class="text-2xl font-bold text-gray-900">12</p>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 class="font-bold text-gray-900">Recent Activity</h2>
+          <button class="text-brand-500 text-sm font-semibold hover:text-brand-700">View All</button>
+        </div>
+        <div class="divide-y divide-gray-50">
+          <div class="flex items-center justify-between px-5 py-3.5">
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Python Basics – Loop Structures</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">9/10 Questions Correct · 2 hours ago</p>
+            </div>
+            <div class="text-right"><p class="text-sm font-bold text-gray-900">90%</p><p class="text-[11px] font-semibold text-green-600">+150 XP</p></div>
+          </div>
+          <div class="flex items-center justify-between px-5 py-3.5">
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Advanced Decorators</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">7/10 Questions Correct · Yesterday</p>
+            </div>
+            <div class="text-right"><p class="text-sm font-bold text-gray-900">70%</p><p class="text-[11px] font-semibold text-green-600">+80 XP</p></div>
+          </div>
+          <div class="flex items-center justify-between px-5 py-3.5">
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Data Types Mastery</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">10/10 Questions Correct · 2 days ago</p>
+            </div>
+            <div class="text-right"><p class="text-sm font-bold text-gray-900">100%</p><p class="text-[11px] font-semibold text-green-600">+252 XP</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Quick Actions</p>
+        <div class="space-y-2">
+          <button onclick="goTo('quizzes')" class="w-full flex items-center justify-between px-4 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl transition-colors text-sm font-semibold">
+            <div class="flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start New Quiz</div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <button onclick="goTo('leaderboard')" class="w-full flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> View Results
+          </button>
+          <button onclick="goTo('leaderboard')" class="w-full flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> Leaderboard
+          </button>
+        </div>
+      </div>
+
+      <!-- Recommended -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-bold text-gray-900 mb-3">Recommended for You</h3>
+        <div class="space-y-3">
+          <div class="border border-gray-100 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2"><span class="diff-hard">Hard</span></div>
+            <p class="font-bold text-sm text-gray-900 mb-1">Algorithmic Complexity (O-Notation)</p>
+            <p class="text-[12px] text-gray-500 mb-3">Master the art of efficient coding. Estimated time: 15 mins.</p>
+            <button onclick="startQuiz('hard')" class="w-full py-2 border-2 border-brand-500 text-brand-500 font-semibold text-xs rounded-lg hover:bg-brand-50 transition-colors">Start Recommendation</button>
+          </div>
+          <div class="border border-gray-100 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2"><span class="diff-med">Medium</span></div>
+            <p class="font-bold text-sm text-gray-900 mb-1">Pandas Data Manipulation</p>
+            <p class="text-[12px] text-gray-500 mb-3">Learn to clean and transform datasets like a pro.</p>
+            <button onclick="startQuiz('medium')" class="w-full py-2 border-2 border-brand-500 text-brand-500 font-semibold text-xs rounded-lg hover:bg-brand-50 transition-colors">Resume Learning</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: QUIZZES ════ -->
+<div id="page-quizzes" class="page">
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-gray-500 mb-5">
+    <span>Python Masterclass</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="font-semibold text-gray-800">Curriculum</span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
+    <div class="space-y-5">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">Choose Your Challenge</h1>
+        <p class="text-gray-500 text-sm">Select a difficulty level to begin your Python assessment. Each challenge is tailored to specific skill milestones.</p>
+      </div>
+
+      <!-- Difficulty Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Easy -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-brand-200 transition-all cursor-pointer" onclick="startQuiz('easy')">
+          <div class="mb-3"><span class="diff-easy">Easy</span></div>
+          <h3 class="font-bold text-gray-900 text-base mb-2">Beginner Friendly</h3>
+          <p class="text-[12px] text-gray-500 mb-4 leading-relaxed">Perfect for those just starting their Python journey. Covers basic syntax, variables, and loops.</p>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-1">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            10 Questions
+          </div>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-4">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            15 mins
+          </div>
+          <button onclick="startQuiz('easy')" class="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm transition-colors">
+            Start New Quiz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+        <!-- Medium -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-brand-200 transition-all cursor-pointer" onclick="startQuiz('medium')">
+          <div class="mb-3"><span class="diff-med">Medium</span></div>
+          <h3 class="font-bold text-gray-900 text-base mb-2">Intermediate</h3>
+          <p class="text-[12px] text-gray-500 mb-4 leading-relaxed">Deepen your understanding with list comprehensions, tuples, data structures, and function scoping.</p>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-1">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            15 Questions
+          </div>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-4">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            25 mins
+          </div>
+          <button onclick="startQuiz('medium')" class="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm transition-colors">
+            Start New Quiz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+        <!-- Hard -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-brand-200 transition-all cursor-pointer" onclick="startQuiz('hard')">
+          <div class="mb-3"><span class="diff-hard">Hard</span></div>
+          <h3 class="font-bold text-gray-900 text-base mb-2">Advanced</h3>
+          <p class="text-[12px] text-gray-500 mb-4 leading-relaxed">The ultimate test. Decorators, generators, context managers, and complex algorithmic challenges.</p>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-1">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            20 Questions
+          </div>
+          <div class="flex items-center gap-2 text-[12px] text-gray-500 mb-4">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            40 mins
+          </div>
+          <button onclick="startQuiz('hard')" class="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm transition-colors">
+            Start New Quiz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Daily Streak -->
+      <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex-1 min-w-0">
+          <h3 class="font-bold text-gray-900 mb-1">Daily Streak Progress</h3>
+          <p class="text-sm text-gray-500 mb-4">You've mastered Python for 5 days in a row. Complete one medium quiz to extend your streak!</p>
+          <div class="flex gap-3">
+            <div class="streak-day"><div class="streak-dot done"></div><span>Mon</span></div>
+            <div class="streak-day"><div class="streak-dot done"></div><span>Tue</span></div>
+            <div class="streak-day"><div class="streak-dot done"></div><span>Wed</span></div>
+            <div class="streak-day"><div class="streak-dot done"></div><span>Thu</span></div>
+            <div class="streak-day"><div class="streak-dot today"></div><span>Fri</span></div>
+            <div class="streak-day"><div class="streak-dot"></div><span>Sat</span></div>
+            <div class="streak-day"><div class="streak-dot"></div><span>Sun</span></div>
+          </div>
+        </div>
+        <div class="w-16 h-16 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Stats -->
+    <div class="bg-white rounded-2xl shadow-sm p-5 h-fit">
+      <h3 class="font-bold text-gray-900 mb-4">Performance Stats</h3>
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-sm mb-1"><span class="text-gray-600">Average Score</span><span class="font-bold text-brand-500">92%</span></div>
+          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500 rounded-full" style="width:92%"></div></div>
+        </div>
+        <div class="flex items-center justify-between py-2 border-b border-gray-100">
+          <span class="text-sm text-gray-600">Quizzes Completed</span>
+          <div class="text-right"><p class="font-bold text-gray-900">24</p><p class="text-[10px] text-gray-400">TOTAL QUIZZES</p></div>
+        </div>
+        <div class="flex items-center justify-between py-2">
+          <span class="text-sm text-gray-600">Global Rank</span>
+          <div class="text-right"><p class="font-bold text-brand-500">#1,204</p><p class="text-[10px] text-gray-400">Top 5% of Python devs</p></div>
+        </div>
+      </div>
+      <button onclick="goTo('leaderboard')" class="w-full mt-4 py-2.5 border-2 border-brand-500 text-brand-500 font-semibold text-sm rounded-xl hover:bg-brand-50 transition-colors">View Leaderboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: QUIZ IN PROGRESS ════ -->
+<div id="page-quiz" class="page">
+  <!-- Progress bar (full width, outside card) -->
+  <div class="flex items-center justify-between text-sm mb-4 gap-4">
+    <span class="font-semibold text-gray-700" id="q-progress-label">Question 1 / 10</span>
+    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mx-2">
+      <div id="q-progress-bar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:10%"></div>
+    </div>
+    <span class="font-semibold text-brand-500 whitespace-nowrap" id="q-pct-label">10% Complete</span>
+    <div class="flex items-center gap-1.5 text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded-full flex-shrink-0">
+      <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+      <span id="quiz-timer">00:00</span>
+    </div>
+  </div>
+
+  <div class="max-w-lg mx-auto space-y-4">
+    <!-- Code Block -->
+    <div class="code-block" id="q-code-wrap">
+      <div class="code-dots">
+        <div class="code-dot" style="background:#ff5f57"></div>
+        <div class="code-dot" style="background:#febc2e"></div>
+        <div class="code-dot" style="background:#28c840"></div>
+      </div>
+      <pre id="q-code" class="text-sm leading-relaxed overflow-x-auto"></pre>
+    </div>
+
+    <!-- Question Card -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <h2 class="font-bold text-gray-900 text-lg mb-4" id="q-text">What is the output?</h2>
+      <div class="space-y-3" id="q-options"></div>
+
+      <div class="flex items-center justify-between mt-6 gap-3">
+        <button onclick="prevQuestion()" id="q-prev-btn" class="flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Previous
+        </button>
+        <button onclick="nextQuestion()" id="q-next-btn" class="flex items-center gap-1.5 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-semibold transition-colors">
+          Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tip -->
+    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 flex gap-3">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><p class="text-sm font-bold text-orange-800 mb-0.5" id="q-tip-title">Python Tip</p><p class="text-xs text-orange-700" id="q-tip-body">Remember BODMAS rules! Parentheses always come first in mathematical operations within Python.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: QUIZ RESULT ════ -->
+<div id="page-result" class="page">
+  <div class="max-w-lg mx-auto text-center">
+    <div class="bg-white rounded-3xl shadow-sm p-8 mb-4">
+      <div class="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4" id="result-icon-wrap">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-1" id="result-title">Quiz Complete!</h2>
+      <p class="text-gray-500 text-sm mb-6" id="result-subtitle">Here's how you did</p>
+      <div class="text-6xl font-black mb-2" id="result-score" style="color:#5B4FE9">80%</div>
+      <p class="text-gray-500 text-sm" id="result-fraction">8 / 10 Correct</p>
+      <div class="grid grid-cols-3 gap-3 mt-6">
+        <div class="bg-gray-50 rounded-xl p-3"><p class="text-lg font-bold text-gray-900" id="res-correct">8</p><p class="text-[11px] text-gray-400">Correct</p></div>
+        <div class="bg-gray-50 rounded-xl p-3"><p class="text-lg font-bold text-gray-900" id="res-wrong">2</p><p class="text-[11px] text-gray-400">Wrong</p></div>
+        <div class="bg-gray-50 rounded-xl p-3"><p class="text-lg font-bold text-brand-500" id="res-xp">+120 XP</p><p class="text-[11px] text-gray-400">Earned</p></div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="goTo('quizzes')" class="flex-1 py-3 border-2 border-brand-500 text-brand-500 font-semibold rounded-xl text-sm hover:bg-brand-50 transition-colors">Try Again</button>
+        <button onclick="goTo('home')" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm transition-colors">Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: LEADERBOARD ════ -->
+<div id="page-leaderboard" class="page">
+  <div class="mb-5">
+    <h1 class="text-2xl font-extrabold text-gray-900">Arena Elite</h1>
+    <p class="text-sm text-gray-500 mt-1">The sharpest Pythonistas in the ecosystem. Climb the ranks by solving complex challenges and contributing to the community.</p>
+  </div>
+
+  <!-- Podium -->
+  <div class="flex items-end justify-center gap-4 mb-8 px-4">
+    <!-- #2 Silver -->
+    <div class="flex-1 max-w-[160px]">
+      <div class="flex justify-center mb-2 relative">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=ffd5dc" class="w-14 h-14 rounded-full border-3 border-gray-300 border-4" alt="">
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+      </div>
+      <div class="podium-2 mt-2">
+        <p class="text-[10px] font-semibold opacity-80 uppercase tracking-wider mb-1">Silver</p>
+        <p class="font-extrabold text-lg">Sarah.py</p>
+        <p class="text-sm opacity-80">14,250 XP</p>
+      </div>
+    </div>
+    <!-- #1 Gold (tallest) -->
+    <div class="flex-1 max-w-[190px] -mt-6">
+      <div class="flex justify-center mb-2 relative">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus&backgroundColor=ffdfbf" class="w-16 h-16 rounded-full border-4 border-yellow-400" alt="">
+        <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-500 rounded-full flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+      </div>
+      <div class="podium-1 mt-2">
+        <p class="text-[10px] font-semibold opacity-80 uppercase tracking-wider mb-1">Master</p>
+        <p class="font-extrabold text-2xl">Marcus Dev</p>
+        <p class="text-sm opacity-80">16,840 XP</p>
+      </div>
+    </div>
+    <!-- #3 Bronze -->
+    <div class="flex-1 max-w-[160px]">
+      <div class="flex justify-center mb-2 relative">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Elena&backgroundColor=d1f4e0" class="w-14 h-14 rounded-full border-4 border-amber-700" alt="">
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-700 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+      </div>
+      <div class="podium-3 mt-2">
+        <p class="text-[10px] font-semibold opacity-80 uppercase tracking-wider mb-1">Bronze</p>
+        <p class="font-extrabold text-lg">ElenaCode</p>
+        <p class="text-sm opacity-80">12,100 XP</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="lb-row border-b-2 border-gray-100 bg-gray-50">
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Rank</span>
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Developer</span>
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Score</span>
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Level</span>
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status</span>
+    </div>
+    <div id="lb-rows"></div>
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <span class="text-xs text-gray-400">Showing top 100 developers</span>
+      <div class="flex gap-2">
+        <button class="w-8 h-8 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="w-8 h-8 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: PROFILE ════ -->
+<div id="page-profile" class="page">
+  <div class="max-w-lg mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-3xl shadow-sm p-6 text-center mb-4">
+      <div class="relative inline-block mb-3">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed&backgroundColor=b6e3f4" class="w-20 h-20 rounded-full" alt="Ahmed">
+        <div class="absolute bottom-0 right-0 w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center border-2 border-white">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+      <h2 class="text-xl font-extrabold text-gray-900" id="profile-name">Ahmed</h2>
+      <div class="flex items-center justify-center gap-2 mt-1 mb-1">
+        <span class="text-xs font-bold bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full">Level 12 Python</span>
+      </div>
+      <p class="text-sm text-gray-400 mb-4" id="profile-email">ahmed.dev@codearena.com</p>
+      <div class="flex gap-3 justify-center">
+        <button class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm transition-colors">Edit Profile</button>
+        <button class="px-5 py-2 border border-gray-200 text-gray-700 font-semibold rounded-xl text-sm hover:bg-gray-50 transition-colors">Settings</button>
+      </div>
+      <!-- Mini stats -->
+      <div class="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-gray-100">
+        <div><p class="text-2xl font-extrabold text-brand-500">1,240</p><p class="text-xs text-gray-400">Global Rank</p></div>
+        <div><p class="text-2xl font-extrabold text-brand-500">4.8</p><p class="text-xs text-gray-400">Avg Rating</p></div>
+      </div>
+    </div>
+
+    <!-- Stat trio -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+        <div class="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+        </div>
+        <p class="text-xl font-bold text-gray-900" id="profile-quizzes">42</p>
+        <p class="text-[11px] text-gray-400">Quizzes</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+        <div class="w-9 h-9 bg-yellow-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+        </div>
+        <p class="text-xl font-bold text-gray-900">100%</p>
+        <p class="text-[11px] text-gray-400">Best Score</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+        <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <p class="text-xl font-bold text-gray-900">88%</p>
+        <p class="text-[11px] text-gray-400">Success Rate</p>
+      </div>
+    </div>
+
+    <!-- Badges + Goal -->
+    <div class="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 mb-4">
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-gray-900">Achievement Badges</h3>
+          <button class="text-brand-500 text-sm font-semibold">View All</button>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="badge-card">
+            <div class="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <p class="text-xs font-bold text-gray-800">Python Beginner</p>
+            <p class="text-[10px] text-gray-400">Completed 10 Basics</p>
+          </div>
+          <div class="badge-card">
+            <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            </div>
+            <p class="text-xs font-bold text-gray-800">Quiz Master</p>
+            <p class="text-[10px] text-gray-400">Top 1% Rank</p>
+          </div>
+          <div class="badge-card">
+            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <p class="text-xs font-bold text-gray-800">Fast Thinker</p>
+            <p class="text-[10px] text-gray-400">Under 10s per Quiz</p>
+          </div>
+        </div>
+      </div>
+      <!-- Current Goal -->
+      <div class="rounded-2xl p-5 text-white flex flex-col" style="background:linear-gradient(135deg,#5B4FE9,#3730b0)">
+        <h3 class="font-bold mb-3">Current Goal</h3>
+        <div class="mb-2">
+          <div class="flex justify-between text-xs mb-1 text-white/80"><span>Advanced Decorators</span><span>70%</span></div>
+          <div class="h-1.5 bg-white/20 rounded-full overflow-hidden"><div class="h-full bg-white rounded-full" style="width:70%"></div></div>
+        </div>
+        <p class="text-xs text-white/70 mt-2 flex-1">Keep it up, Ahmed! You're only 3 quizzes away from your next level up.</p>
+        <button onclick="goTo('quizzes')" class="mt-4 w-full bg-white text-brand-600 font-semibold text-xs py-2.5 rounded-xl hover:bg-brand-50 transition-colors">Resume Learning</button>
+      </div>
+    </div>
+
+    <!-- Recent Quizzes Table -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100"><h3 class="font-bold text-gray-900">Recent Quizzes</h3></div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead><tr class="border-b border-gray-100">
+            <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-5 py-2.5">Topic</th>
+            <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-3 py-2.5">Difficulty</th>
+            <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-3 py-2.5">Score</th>
+            <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-3 py-2.5">Date</th>
+            <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-3 py-2.5">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-gray-900">List Comprehensions</td>
+              <td class="px-3 py-3"><span class="diff-easy">Easy</span></td>
+              <td class="px-3 py-3 font-bold text-gray-900 text-sm">10/10</td>
+              <td class="px-3 py-3 text-xs text-gray-400">Oct 24, 2026</td>
+              <td class="px-3 py-3"><button onclick="startQuiz('easy')" class="text-brand-500 font-semibold text-xs hover:text-brand-700">Review</button></td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-gray-900">Asynchronous Programming</td>
+              <td class="px-3 py-3"><span class="diff-hard">Hard</span></td>
+              <td class="px-3 py-3 font-bold text-gray-900 text-sm">8/10</td>
+              <td class="px-3 py-3 text-xs text-gray-400">Oct 22, 2026</td>
+              <td class="px-3 py-3"><button onclick="startQuiz('hard')" class="text-brand-500 font-semibold text-xs hover:text-brand-700">Review</button></td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-gray-900">Error Handling</td>
+              <td class="px-3 py-3"><span class="diff-med">Medium</span></td>
+              <td class="px-3 py-3 font-bold text-gray-900 text-sm">9/10</td>
+              <td class="px-3 py-3 text-xs text-gray-400">Oct 20, 2026</td>
+              <td class="px-3 py-3"><button onclick="startQuiz('medium')" class="text-brand-500 font-semibold text-xs hover:text-brand-700">Review</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: ABOUT ════ -->
+<div id="page-about" class="page">
+  <div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-3xl shadow-sm p-8 text-center mb-5">
+      <h1 class="text-3xl font-extrabold text-brand-500 mb-2">CodeArena</h1>
+      <p class="text-gray-500 mb-6">Mastering Dev together. — The ultimate Python learning platform for developers who want to level up fast.</p>
+      <div class="grid grid-cols-3 gap-4 mt-4">
+        <div class="bg-brand-50 rounded-xl p-4"><p class="text-2xl font-bold text-brand-500">50K+</p><p class="text-xs text-gray-500">Developers</p></div>
+        <div class="bg-brand-50 rounded-xl p-4"><p class="text-2xl font-bold text-brand-500">1,200+</p><p class="text-xs text-gray-500">Quizzes</p></div>
+        <div class="bg-brand-50 rounded-xl p-4"><p class="text-2xl font-bold text-brand-500">95%</p><p class="text-xs text-gray-500">Satisfaction</p></div>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="bg-white rounded-2xl shadow-sm p-5"><h3 class="font-bold text-gray-900 mb-2">🎯 Our Mission</h3><p class="text-sm text-gray-500">Make Python mastery accessible to every developer, everywhere. Learn through challenges, not lectures.</p></div>
+      <div class="bg-white rounded-2xl shadow-sm p-5"><h3 class="font-bold text-gray-900 mb-2">🏆 Gamified Learning</h3><p class="text-sm text-gray-500">Earn XP, climb the leaderboard, unlock badges, and compete with peers from around the world.</p></div>
+      <div class="bg-white rounded-2xl shadow-sm p-5"><h3 class="font-bold text-gray-900 mb-2">📊 Track Progress</h3><p class="text-sm text-gray-500">Detailed stats show exactly where you excel and where to improve. Data-driven learning at its best.</p></div>
+      <div class="bg-white rounded-2xl shadow-sm p-5"><h3 class="font-bold text-gray-900 mb-2">🤝 Community</h3><p class="text-sm text-gray-500">Join thousands of Python devs, share solutions, and grow together as a community.</p></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end pages wrapper -->
+
+<!-- FOOTER -->
+<footer class="border-t border-gray-200 bg-white mt-8 py-4">
+  <div class="max-w-5xl mx-auto px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+    <span>© 2024 CodeArena. Mastering Python together.</span>
+    <div class="flex gap-5">
+      <button class="hover:text-gray-600 transition-colors">Privacy Policy</button>
+      <button class="hover:text-gray-600 transition-colors">Terms of Service</button>
+      <button class="hover:text-gray-600 transition-colors">Contact Support</button>
+    </div>
+  </div>
+</footer>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav id="mobile-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 items-center justify-around py-2 pb-safe" style="padding-bottom: env(safe-area-inset-bottom,8px)">
+  <button onclick="goTo('home')"        id="mnav-home"        class="flex flex-col items-center gap-0.5 text-gray-400 px-3 py-1 rounded-xl transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="text-[9px] font-medium">Home</span></button>
+  <button onclick="goTo('quizzes')"     id="mnav-quizzes"     class="flex flex-col items-center gap-0.5 text-gray-400 px-3 py-1 rounded-xl transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg><span class="text-[9px] font-medium">Quizzes</span></button>
+  <button onclick="goTo('leaderboard')" id="mnav-leaderboard" class="flex flex-col items-center gap-0.5 text-gray-400 px-3 py-1 rounded-xl transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg><span class="text-[9px] font-medium">Ranks</span></button>
+  <button onclick="goTo('profile')"     id="mnav-profile"     class="flex flex-col items-center gap-0.5 text-gray-400 px-3 py-1 rounded-xl transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="text-[9px] font-medium">Profile</span></button>
+</nav>
+
+<script>
+/* ══════════════════════════
+   STATE
+══════════════════════════ */
+const state = {
+  user: null,
+  xp: 8450, level: 12, quizzesDone: 24,
+  currentDifficulty: 'easy',
+  quiz: { questions:[], current:0, answers:{}, timerSec:0, timerInterval:null }
+};
+
+// Auth guard — TaskFlow login or CodeArena session
+let storedUser = sessionStorage.getItem('ca_user');
+if (!storedUser) {
+  const tfUser = localStorage.getItem('username');
+  if (tfUser) {
+    const bridged = {
+      name: tfUser.charAt(0).toUpperCase() + tfUser.slice(1),
+      email: tfUser + '@taskflow.com'
+    };
+    sessionStorage.setItem('ca_user', JSON.stringify(bridged));
+    storedUser = sessionStorage.getItem('ca_user');
+  }
+}
+if (!storedUser) {
+  window.location.href = '/codearena/auth';
+} else {
+  state.user = JSON.parse(storedUser);
+}
+
+/* ══════════════════════════
+   QUIZ DATA
+══════════════════════════ */
+const QUIZ_BANK = {
+  easy: [
+    { code:'print(2 * (3 + 4))', q:'What is the output?', opts:['14','21','23','12'], ans:0, tip:'Python Tip', tipBody:'Remember BODMAS rules! Parentheses always come first in mathematical operations within Python.' },
+    { code:'x = [1,2,3]\nprint(x[-1])', q:'What does x[-1] return?', opts:['1','2','3','Error'], ans:2, tip:'Python Tip', tipBody:'Negative indexing in Python starts from the end of the list. -1 is the last element.' },
+    { code:'print(type(3.14))', q:'What is the type?', opts:["<class 'int'>",'<class \'float\'>',"<class 'str'>",'None'], ans:1, tip:'Python Tip', tipBody:'3.14 is a floating-point number. Use type() to inspect any variable.' },
+    { code:'for i in range(3):\n    print(i)', q:'How many lines are printed?', opts:['2','3','4','0'], ans:1, tip:'Python Tip', tipBody:'range(3) generates 0, 1, 2 — three values total.' },
+    { code:'print("py" * 3)', q:'What is the output?', opts:['py py py','pypy py','pypypy','Error'], ans:2, tip:'Python Tip', tipBody:'String multiplication repeats the string. "py" * 3 = "pypypy".' },
+  ],
+  medium: [
+    { code:'nums = [x**2 for x in range(1,4)]\nprint(nums)', q:'What is the output?', opts:['[1,4,9]','[0,1,4]','[1,2,3]','[2,4,6]'], ans:0, tip:'Python Tip', tipBody:'List comprehension: x**2 for x in [1,2,3] gives [1,4,9].' },
+    { code:'def f(x, y=10):\n    return x + y\nprint(f(5))', q:'What is the output?', opts:['5','10','15','Error'], ans:2, tip:'Python Tip', tipBody:'y=10 is a default argument. f(5) uses x=5, y=10 → 15.' },
+    { code:'d = {"a":1,"b":2}\nprint(d.get("c",0))', q:'What is printed?', opts:['None','0','Error','KeyError'], ans:1, tip:'Python Tip', tipBody:'.get(key, default) returns the default value when the key is not found.' },
+    { code:'s = {1,2,2,3}\nprint(len(s))', q:'What is len(s)?', opts:['4','3','2','1'], ans:1, tip:'Python Tip', tipBody:'Sets remove duplicates automatically. {1,2,2,3} becomes {1,2,3}.' },
+    { code:'print(bool([]))', q:'What is the output?', opts:['True','False','None','Error'], ans:1, tip:'Python Tip', tipBody:'Empty containers are falsy in Python: [], {}, "", 0 all evaluate to False.' },
+  ],
+  hard: [
+    { code:'def gen():\n    yield 1\n    yield 2\ng = gen()\nprint(next(g) + next(g))', q:'What is the output?', opts:['12','3','2','Error'], ans:1, tip:'Python Tip', tipBody:'Generators use yield to return values lazily. next() retrieves the next yielded value.' },
+    { code:'from functools import reduce\nprint(reduce(lambda a,b: a*b, [1,2,3,4]))', q:'What is the result?', opts:['10','24','12','None'], ans:1, tip:'Python Tip', tipBody:'reduce applies function cumulatively: 1*2=2, 2*3=6, 6*4=24.' },
+    { code:'class A:\n    x = 5\na1,a2 = A(),A()\na1.x = 10\nprint(a2.x)', q:'What is printed?', opts:['10','5','None','AttributeError'], ans:1, tip:'Python Tip', tipBody:'a1.x = 10 creates an instance attribute, not modifying the class attribute A.x.' },
+    { code:'lst = [1,2,3]\nlst2 = lst\nlst2.append(4)\nprint(lst)', q:'What is lst?', opts:['[1,2,3]','[1,2,3,4]','[4]','Error'], ans:1, tip:'Python Tip', tipBody:'lst2 = lst creates a reference, not a copy. Both variables point to the same list object.' },
+    { code:'print({i:i**2 for i in range(1,4)})', q:'What is the output?', opts:['{1:1,2:4,3:9}','{0:0,1:1,2:4}','[1,4,9]','Error'], ans:0, tip:'Python Tip', tipBody:'Dict comprehension creates key-value pairs. range(1,4) = [1,2,3].' },
+  ]
+};
+
+/* ══════════════════════════
+   NAVIGATION
+══════════════════════════ */
+const PAGES = ['home','quizzes','quiz','result','leaderboard','profile','about'];
+
+function goTo(page) {
+  PAGES.forEach(p => {
+    document.getElementById('page-'+p)?.classList.remove('active');
+  });
+  document.getElementById('page-'+page)?.classList.add('active');
+
+  // Desktop nav
+  ['home','quizzes','leaderboard','about'].forEach(p => {
+    document.getElementById('nav-'+p)?.classList.remove('active');
+  });
+  if (document.getElementById('nav-'+page)) document.getElementById('nav-'+page).classList.add('active');
+
+  // Mobile nav
+  ['home','quizzes','leaderboard','profile'].forEach(p => {
+    const el = document.getElementById('mnav-'+p);
+    if (el) { el.style.color = ''; el.querySelector('span').style.color=''; }
+  });
+  const mn = document.getElementById('mnav-'+page);
+  if (mn) { mn.style.color='#5B4FE9'; mn.querySelector('span').style.color='#5B4FE9'; }
+
+  // Page-specific init
+  if (page==='leaderboard') renderLeaderboard();
+  if (page==='quiz') { /* already setup by startQuiz */ }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ══════════════════════════
+   QUIZ LOGIC
+══════════════════════════ */
+function startQuiz(difficulty) {
+  state.currentDifficulty = difficulty;
+  state.quiz.questions = [...QUIZ_BANK[difficulty]].sort(()=>Math.random()-.5).slice(0,5);
+  state.quiz.current   = 0;
+  state.quiz.answers   = {};
+  clearInterval(state.quiz.timerInterval);
+  state.quiz.timerSec  = 0;
+  startTimer();
+  renderQuestion();
+  goTo('quiz');
+}
+
+function startTimer() {
+  clearInterval(state.quiz.timerInterval);
+  state.quiz.timerSec = 0;
+  state.quiz.timerInterval = setInterval(() => {
+    state.quiz.timerSec++;
+    const m = String(Math.floor(state.quiz.timerSec/60)).padStart(2,'0');
+    const s = String(state.quiz.timerSec%60).padStart(2,'0');
+    const el = document.getElementById('quiz-timer');
+    if (el) {
+      el.textContent = m+':'+s;
+      if (state.quiz.timerSec > 600) el.classList.add('timer-warn');
+    }
+  }, 1000);
+}
+
+function renderQuestion() {
+  const total = state.quiz.questions.length;
+  const idx   = state.quiz.current;
+  const q     = state.quiz.questions[idx];
+  if (!q) return;
+
+  // Progress
+  document.getElementById('q-progress-label').textContent = `Question ${idx+1} / ${total}`;
+  document.getElementById('q-pct-label').textContent = `${Math.round(((idx+1)/total)*100)}% Complete`;
+  document.getElementById('q-progress-bar').style.width = ((idx+1)/total*100)+'%';
+
+  // Code
+  const codeWrap = document.getElementById('q-code-wrap');
+  const codeEl   = document.getElementById('q-code');
+  if (q.code) {
+    codeWrap.style.display='block';
+    codeEl.innerHTML = syntaxHL(q.code);
+  } else { codeWrap.style.display='none'; }
+
+  // Question
+  document.getElementById('q-text').textContent = q.q;
+
+  // Options
+  const letters = ['A','B','C','D'];
+  const saved   = state.quiz.answers[idx];
+  document.getElementById('q-options').innerHTML = q.opts.map((opt,i) => {
+    let cls = 'quiz-opt';
+    if (saved !== undefined) {
+      if (i === q.ans) cls += ' correct';
+      else if (i === saved && i !== q.ans) cls += ' wrong';
+    } else if (saved === i) { cls += ' selected'; }
+    return `<div class="${cls}" onclick="selectAnswer(${i})" id="opt-${i}">
+      <div class="opt-letter">${letters[i]}</div>
+      <span class="text-sm text-gray-800">${esc(opt)}</span>
+    </div>`;
+  }).join('');
+
+  // Tip
+  document.getElementById('q-tip-title').textContent  = q.tip;
+  document.getElementById('q-tip-body').textContent   = q.tipBody;
+
+  // Buttons
+  document.getElementById('q-prev-btn').disabled = idx === 0;
+  document.getElementById('q-next-btn').textContent = idx === total-1 ? 'Finish' : 'Next';
+  document.getElementById('q-next-btn').innerHTML   = idx === total-1
+    ? 'Finish <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    : 'Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+}
+
+function selectAnswer(optIdx) {
+  const idx = state.quiz.current;
+  const q   = state.quiz.questions[idx];
+  if (state.quiz.answers[idx] !== undefined) return; // already answered
+
+  state.quiz.answers[idx] = optIdx;
+
+  // Reveal correct/wrong
+  q.opts.forEach((_,i) => {
+    const el = document.getElementById('opt-'+i);
+    if (!el) return;
+    if (i === q.ans) el.classList.add('correct');
+    else if (i === optIdx && i !== q.ans) el.classList.add('wrong');
+    el.style.pointerEvents = 'none';
+    // Update letter
+    const letter = el.querySelector('.opt-letter');
+    if (i === q.ans) { letter.style.background='#16a34a'; letter.style.color='#fff'; }
+    else if (i === optIdx && i !== q.ans) { letter.style.background='#dc2626'; letter.style.color='#fff'; }
+  });
+
+  if (optIdx === q.ans) showToast('success','Correct! 🎉');
+  else showToast('error','Wrong — the correct answer was highlighted.');
+}
+
+function nextQuestion() {
+  const total = state.quiz.questions.length;
+  if (state.quiz.current < total-1) {
+    state.quiz.current++;
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+function prevQuestion() {
+  if (state.quiz.current > 0) {
+    state.quiz.current--;
+    renderQuestion();
+  }
+}
+
+function finishQuiz() {
+  clearInterval(state.quiz.timerInterval);
+  const total   = state.quiz.questions.length;
+  const correct = state.quiz.questions.filter((q,i) => state.quiz.answers[i] === q.ans).length;
+  const pct     = Math.round((correct/total)*100);
+  const xpEarned = correct * 25 + (pct===100?50:0);
+
+  // Update state
+  state.xp += xpEarned;
+  state.quizzesDone++;
+  document.getElementById('stat-quizzes').textContent = state.quizzesDone;
+  document.getElementById('xp-current').textContent   = state.xp.toLocaleString()+' XP';
+  document.getElementById('xp-bar').style.width       = Math.min(100,Math.round((state.xp/10000)*100))+'%';
+
+  // Result screen
+  const iconWrap = document.getElementById('result-icon-wrap');
+  iconWrap.style.background = pct>=70 ? 'linear-gradient(135deg,#5B4FE9,#3730b0)' : 'linear-gradient(135deg,#f59e0b,#d97706)';
+  document.getElementById('result-score').textContent    = pct+'%';
+  document.getElementById('result-fraction').textContent = `${correct} / ${total} Correct`;
+  document.getElementById('result-title').textContent    = pct===100?'Perfect Score! 🏆': pct>=70?'Great Work! 🎉':'Keep Practicing! 💪';
+  document.getElementById('result-subtitle').textContent = pct>=70?'You passed this challenge!':'You need 70% to pass.';
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent   = total-correct;
+  document.getElementById('res-xp').textContent      = '+'+xpEarned+' XP';
+
+  showToast('success', `Quiz complete! +${xpEarned} XP earned!`);
+  goTo('result');
+}
+
+/* ══════════════════════════
+   LEADERBOARD
+══════════════════════════ */
+const LB_DATA = [
+  { rank:4, name:'Liam_Stack',  xp:11920, level:35, status:'up'   },
+  { rank:5, name:'Sophia_JS',   xp:10850, level:42, status:'same' },
+  { rank:6, name:'Ahmed',       xp:8420,  level:12, status:'up', me:true },
+  { rank:7, name:'Felix_C',     xp:8100,  level:11, status:'down' },
+  { rank:8, name:'Maya_Dev',    xp:7950,  level:10, status:'same' },
+];
+
+function renderLeaderboard() {
+  const seeds = { 'Liam_Stack':'b6e3f4','Sophia_JS':'ffdfbf','Ahmed':'b6e3f4','Felix_C':'d1f4e0','Maya_Dev':'ffd5dc' };
+  const statusIcon = {
+    up:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>',
+    down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>',
+    same: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  };
+  document.getElementById('lb-rows').innerHTML = LB_DATA.map(r => `
+    <div class="lb-row ${r.me?'me':''}">
+      <span class="font-bold text-sm ${r.me?'text-brand-500':'text-gray-700'}">#${r.rank.toString().padStart(2,'0')}</span>
+      <div class="flex items-center gap-2 min-w-0">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${r.name}&backgroundColor=${seeds[r.name]||'b6e3f4'}" class="w-7 h-7 rounded-full flex-shrink-0" alt="">
+        <div class="min-w-0"><p class="text-sm font-semibold ${r.me?'text-brand-500':'text-gray-900'} truncate">${esc(r.name)}</p>${r.me?'<p class="text-[10px] text-brand-400">CURRENT USER</p>':''}</div>
+      </div>
+      <span class="font-bold text-sm ${r.me?'text-brand-500':'text-gray-700'}">${r.xp.toLocaleString()} XP</span>
+      <span class="text-[11px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">Lvl ${r.level}</span>
+      <span class="flex items-center">${statusIcon[r.status]||''}</span>
+    </div>`
+  ).join('');
+}
+
+/* ══════════════════════════
+   SYNTAX HIGHLIGHT (simple)
+══════════════════════════ */
+function syntaxHL(code) {
+  return code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(print|def|return|for|in|range|class|import|from|yield|lambda)/g,'<span style="color:#cba6f7">$1</span>')
+    .replace(/(".*?"|'.*?')/g,'<span style="color:#a6e3a1">$1</span>')
+    .replace(/\b(\d+(\.\d+)?)\b/g,'<span style="color:#fab387">$1</span>')
+    .replace(/#.*/g,'<span style="color:#6c7086">$&</span>');
+}
+
+/* ══════════════════════════
+   TOAST
+══════════════════════════ */
+let toastT;
+function showToast(type,msg) {
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  const txt = document.getElementById('toast-msg');
+  const icons = {
+    success:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    error:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    info:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>`,
+  };
+  ico.innerHTML = icons[type]||icons.info;
+  txt.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ══════════════════════════
+   LOGOUT
+══════════════════════════ */
+function handleLogout() {
+  sessionStorage.removeItem('ca_user');
+  showToast('info','Returning to TaskFlow…');
+  setTimeout(()=>{ window.location.href='/dashboard'; },1200);
+}
+
+const SUN_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2"/></svg>';
+const MOON_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+function initTheme() {
+  const saved = localStorage.getItem('ca_theme') || 'light';
+  document.documentElement.classList.toggle('dark', saved === 'dark');
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('ca_theme', isDark ? 'dark' : 'light');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.innerHTML = document.documentElement.classList.contains('dark') ? SUN_ICON : MOON_ICON;
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ══════════════════════════
+   INIT
+══════════════════════════ */
+function init() {
+  const user = state.user;
+  const name = user.name || 'Ahmed';
+  const email = user.email || 'ahmed.dev@codearena.com';
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=b6e3f4`;
+
+  document.getElementById('banner-name').textContent  = name;
+  document.getElementById('nav-username').textContent = name;
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-email').textContent = email;
+
+  document.querySelectorAll('img[alt="Ahmed"], nav img.rounded-full, #page-profile img.rounded-full').forEach(img => {
+    img.src = avatarUrl;
+    img.alt = name;
+  });
+
+  initTheme();
+  goTo('home');
+}
+
+if (state.user) init();
+</script>
+</body>
+</html>

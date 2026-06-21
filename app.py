@@ -1,7 +1,17 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_from_directory, redirect
 import json
+import os
 
 app = Flask(__name__)
+
+CODEARENA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "codearena")
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
 
 TASKS_FILE = "task.json"
 
@@ -32,11 +42,11 @@ def home():
 # ----------------------------------
 @app.route("/dashboard")
 def dashboard():
-    data = read_data()
-    return render_template(
-        "dashboard.html",
-        tasks=data["task"]
-    ) 
+    return render_template("dashboard.html")
+
+@app.route("/members")
+def members():
+    return render_template("dashboard.html")
     
 
 
@@ -70,8 +80,14 @@ def add_task():
     new_task = {
         "id": new_id,
         "title": body["title"],
-        "status": "À faire",
-        "assigned_to": body.get("assigned_to", "")
+        "desc": body.get("desc", ""),
+        "status": body.get("status", "À faire"),
+        "assigned_to": body.get("assigned_to", ""),
+        "tag": body.get("tag", "Development"),
+        "urgent": body.get("urgent", False),
+        "live": body.get("live", False),
+        "info": body.get("info", ""),
+        "infoIcon": body.get("infoIcon", ""),
     }
 
     data["task"].append(new_task)
@@ -104,6 +120,24 @@ def update_task(task_id):
 
             if "assigned_to" in body:
                 task["assigned_to"] = body["assigned_to"]
+
+            if "desc" in body:
+                task["desc"] = body["desc"]
+
+            if "tag" in body:
+                task["tag"] = body["tag"]
+
+            if "urgent" in body:
+                task["urgent"] = body["urgent"]
+
+            if "live" in body:
+                task["live"] = body["live"]
+
+            if "info" in body:
+                task["info"] = body["info"]
+
+            if "infoIcon" in body:
+                task["infoIcon"] = body["infoIcon"]
 
             if "status" in body:
 
@@ -148,11 +182,24 @@ def delete_task(task_id):
     }) 
 
 # ----------------------------------
-# Quiz Page (CodeArena)
+# CodeArena (linked from c:\Users\pc\Documents\codearena)
 # ----------------------------------
+@app.route("/codearena")
+def codearena_root():
+    return redirect("/codearena/app")
+
+@app.route("/codearena/app")
+@app.route("/codearena/app/")
+def codearena_app():
+    return send_from_directory(CODEARENA_DIR, "codearena-app.html")
+
+@app.route("/codearena/auth")
+def codearena_auth():
+    return send_from_directory(CODEARENA_DIR, "codearena-auth.html")
+
 @app.route("/quiz")
 def quiz():
-    return render_template("quize.html")
+    return redirect("/codearena/app")
 
 # ----------------------------------
 # Read Quiz Questions
@@ -255,11 +302,7 @@ def api_status():
 #----------------------------------
 @app.route("/mytasks")
 def mytasks():
-    data = read_data()
-    return render_template(
-        "index.html",
-        tasks=data["task"]
-    )
+    return render_template("dashboard.html")
 # ----------------------------------
 
 @app.route("/forgot-password")
