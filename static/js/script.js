@@ -68,3 +68,5 @@ async function deleteTask(id){
 loadTasks();
 
 
+const description =
+    document.getElementById("description").value;
